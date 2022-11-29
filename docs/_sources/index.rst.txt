@@ -1,0 +1,36 @@
+.. Warden_robot documentation master file, created by
+   sphinx-quickstart on Tue Nov 29 01:15:55 2022.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+Welcome to Warden_robot's documentation!
+========================================
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
+
+
+Warden_robot's documentation!
+********************************
+This is the documentation of the warden_robot package! This package is the solution for the first assignment of Experimental Robotics class of the University of Genoa (UniGe). In order to get to know the assignment better, please refer to https://www.github.com/fenixkz/warden_robot 
+
+State Machine module
+=====================
+.. automodule:: state_machine
+   :members:
+   
+State Helper module
+=====================
+.. automodule:: state_helper
+   :members:
+
