@@ -1,0 +1,57 @@
+<launch>
+
+    <arg name="random" default="false" />
+    <arg name="view_smach_gui" default="false"/>
+    <rosparam subst_value="true">
+        test/random_sense/active: $(arg random)
+        test/random_plan_points: [2, 6]
+        test/random_plan_time: [0.1, 0.2]
+        test/random_motion_time: [0.1, 0.2]
+        state/initial_pose: [10.0, 2.0]
+        config/waiting_time: 3.0
+        config/charge_time: 10.0
+        config/environment_size: [20.0, 20.0]
+        config/charging_station: 'E'
+        config/ontology_name: "topological_map.owl"
+        config/ontology_path: "/root/ros_ws/src/warden_robot/topological_map"
+    </rosparam>
+    
+    <group if="$(arg random)">
+    	<rosparam param="test/random_sense/battery_time"> [10.0, 30.0] </rosparam>
+    </group>
+    
+    
+    <node pkg="armor"
+          type="execute"
+          name="armor_service"
+          args="it.emarolab.armor.ARMORMainService" /> 
+
+    <node pkg = "warden_robot"  
+          type = "state_machine.py" 
+          name = "state_machine"
+          output = "screen"/>
+
+
+    <node pkg = "warden_robot"  
+          type = "robot_states.py" 
+          name = "robot_states"
+          launch-prefix = "xterm -e"
+          output = "screen"/>
+
+    <node pkg = "warden_robot"  
+          type = "planner.py"
+          name = "planner"
+          launch-prefix = "xterm -e"
+          output = "screen"/>
+    
+    <node pkg = "warden_robot"  
+          type = "controller.py"
+          name = "controller"
+          launch-prefix = "xterm -e"
+          output = "screen"/>
+          
+    <group if="$(arg view_smach_gui)">
+    	<node pkg = "smach_viewer" type = "smach_viewer.py" name = "smach_viewer"/>
+    </group>
+
+</launch>
