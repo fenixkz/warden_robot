@@ -5,6 +5,9 @@ This repository simulates the robot in a indoor environment for surveillance pur
 
 The repository was implemented on Docker container with Ubuntu 20.04 with ROS Kinetic and Python 3.8.  
 Further, the documentation for the project can be found [here](https://github.com/fenixkz)
+## Documentation
+Documentation for the project cana be found [here](https://fenixkz.github.io/warden_robot/)
+
 ## Scenario
 The robot is used to inspect different locations in the indoor environment. The robot’s objective is to visit the different locations and stay there for some times.
 
