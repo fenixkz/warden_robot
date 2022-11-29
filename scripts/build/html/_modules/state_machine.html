@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>state_machine &mdash; Warden_robot 1.0 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> Warden_robot
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Warden_robot</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Module code</a></li>
+      <li class="breadcrumb-item active">state_machine</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for state_machine</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">.. module:: state_machine</span>
+<span class="sd">  :platform: Unix</span>
+<span class="sd">  :synopsis: Main python script that encapsulates the state machine and provides the implementation of the logic behind the states</span>
+<span class="sd">  </span>
+<span class="sd">.. moduleauthor:: Ayan Mazhitov mazhitovayan@gmail.com</span>
+
+<span class="sd">This script is the main script that creates the state machine based on `SMACH &lt;http://wiki.ros.org/smach&gt;`_ ROS library.</span>
+<span class="sd">The necessary connections to ontology via `armor_py_api &lt;https://github.com/EmaroLab/armor_py_api&gt;`_ is done via the helper class :mod:`state_helper.ProtegeHelper`</span>
+<span class="sd">Interface helper (:mod:`state_helper.interface_helper`) is used to do the logic described by the surveillance policy</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># Import of the necessary libraris</span>
+<span class="kn">import</span> <span class="nn">rospy</span>
+<span class="kn">import</span> <span class="nn">smach_ros</span>
+<span class="kn">from</span> <span class="nn">smach</span> <span class="kn">import</span> <span class="n">StateMachine</span><span class="p">,</span> <span class="n">State</span>
+<span class="kn">import</span> <span class="nn">math</span>
+
+<span class="kn">from</span> <span class="nn">warden_robot</span> <span class="kn">import</span> <span class="n">architecture_name_mapper</span> <span class="k">as</span> <span class="n">anm</span>
+<span class="kn">from</span> <span class="nn">warden_robot.msg</span> <span class="kn">import</span> <span class="n">Point</span><span class="p">,</span> <span class="n">PlanGoal</span><span class="p">,</span> <span class="n">ControlGoal</span>
+<span class="kn">from</span> <span class="nn">state_helper</span> <span class="kn">import</span> <span class="n">ProtegeHelper</span><span class="p">,</span> <span class="n">InterfaceHelper</span>
+
+<span class="c1"># Define states of the state machine</span>
+<span class="n">STATE_BUILD_MAP</span> <span class="o">=</span> <span class="s2">&quot;BUILD_MAP&quot;</span> <span class="c1"># Phase 1. State when the robot waits until the topological map is built</span>
+
+<span class="n">STATE_START_EXPLORING</span> <span class="o">=</span> <span class="s2">&quot;START_EXPLORING&quot;</span> <span class="c1"># Phase 2. Higher level state for the normal behavior of the surveillance policy.</span>
+<span class="n">STATE_START_BEHAVIOR</span> <span class="o">=</span> <span class="s2">&quot;START_BEHAVIOR&quot;</span> <span class="c1"># Phase 2. Lower level state of STATE_START_EXPLORING. Start the normal behavior.</span>
+<span class="n">STATE_PLAN_TO_LOCATION</span> <span class="o">=</span> <span class="s1">&#39;PLAN_TO_GIVEN_LOCATION&#39;</span> <span class="c1"># Phase 2. Lower level state of STATE_START_EXPLORING. Compute plan (via points) to a specified location</span>
+<span class="n">STATE_GO_TO_LOCATION</span> <span class="o">=</span> <span class="s1">&#39;GO_TO_GIVEN_LOCATION&#39;</span> <span class="c1"># Phase 2. Lower level state of STATE_START_EXPLORING. Follow the plan given by the previous state</span>
+<span class="n">STATE_WAIT_IN_LOCATION</span> <span class="o">=</span> <span class="s2">&quot;WAIT_IN_LOCATION&quot;</span> <span class="c1"># Phase 2. Lower level state of STATE_START_EXPLORING. Wait in the location for the surveillance purposes.</span>
+
+<span class="n">STATE_RECHARGING_ROUTINE</span> <span class="o">=</span> <span class="s2">&quot;START_RECHARGING_ROUTINE&quot;</span> <span class="c1"># Phase 2. Higher level state for the recharging routine. Compute and follow the plan to go to the location containing the charging station</span>
+<span class="n">STATE_PLAN_TO_CHARGING_LOCATION</span> <span class="o">=</span> <span class="s2">&quot;PLAN_TO_CHARGING_LOCATION&quot;</span> <span class="c1"># Phase 2. Lower level state of START_RECHARGING_ROUTINE. Compute the plan to the charging station</span>
+<span class="n">STATE_GO_TO_CHARGING_LOCATION</span> <span class="o">=</span> <span class="s2">&quot;GO_TO_CHARGING_LOCATION&quot;</span> <span class="c1"># Phase 2. Lower level state of START_RECHARGING_ROUTINE. Follow the plan given by the previous state</span>
+<span class="n">STATE_RECHARGE</span> <span class="o">=</span> <span class="s2">&quot;RECHARGE&quot;</span> <span class="c1"># Phase 2. Lower level state of START_RECHARGING_ROUTINE. State where the robot recharges its battery</span>
+
+<span class="c1"># Define transitions</span>
+<span class="n">TRANS_MAP_NOT_BUILT</span> <span class="o">=</span> <span class="s2">&quot;MAP_HAS_NOT_BUILT&quot;</span> <span class="c1"># Map is not have yet been built</span>
+<span class="n">TRANS_MAP_BUILT</span> <span class="o">=</span> <span class="s2">&quot;MAP_BUILT&quot;</span> <span class="c1"># Map has been built </span>
+<span class="n">TRANS_REPEAT</span> <span class="o">=</span> <span class="s2">&quot;REPEAT&quot;</span> <span class="c1"># Repeat the normal behavior routine</span>
+<span class="n">TRANS_BATTERY_LOW</span> <span class="o">=</span> <span class="s2">&quot;BATTERY_IS_LOW&quot;</span> <span class="c1"># Battery is low</span>
+<span class="n">TRANS_BATTERY_FULL</span> <span class="o">=</span> <span class="s2">&quot;BATTERY_IS_FULL&quot;</span> <span class="c1"># Battery is full</span>
+<span class="n">TRANS_PLAN_TO_LOCATION</span> <span class="o">=</span> <span class="s2">&quot;PLAN_TO_LOCATION&quot;</span> <span class="c1"># Plan to location</span>
+<span class="n">TRANS_PLANNED_TO_LOCATION</span> <span class="o">=</span> <span class="s2">&quot;VIA_POINTS_HAVE_BEEN_COMPUTED&quot;</span> <span class="c1"># Plan has been computed</span>
+<span class="n">TRANS_GO_TO_LOCATION</span> <span class="o">=</span> <span class="s2">&quot;GO_TO_LOCATION&quot;</span> <span class="c1"># Follow the plan</span>
+<span class="n">TRANS_WENT_TO_LOCATION</span> <span class="o">=</span> <span class="s2">&quot;ROBOT_HAS_MOVED_TO_GIVEN_LOCATION&quot;</span> <span class="c1"># Robot has successfully changed the location</span>
+<span class="n">TRANS_RECHARGING</span> <span class="o">=</span> <span class="s2">&quot;RECHARGING_THE_BATTERY&quot;</span> <span class="c1"># Recharge the battery</span>
+<span class="n">TRANS_DONE_WAITING</span> <span class="o">=</span> <span class="s2">&quot;DONE_WAITING&quot;</span> <span class="c1"># Done surveying the location</span>
+
+<span class="n">TRANS_IN_CHARGING_LOCATION</span> <span class="o">=</span> <span class="s2">&quot;ROBOT_IS_IN_CHARGING_LOCATION&quot;</span> <span class="c1"># Robot is in location containing the charging station</span>
+<span class="n">TRANS_NOT_IN_CHARGING_LOCATION</span> <span class="o">=</span> <span class="s2">&quot;ROBOT_IS_NOT_IN_CHARGING_LOCATION&quot;</span><span class="c1"># Robot is not in location containing the charging station</span>
+
+
+
+<span class="n">LOOP_SLEEP_TIME</span> <span class="o">=</span> <span class="mf">0.1</span> <span class="c1"># Loop sleep time. 10 Hz.</span>
+
+<span class="n">LOG_TAG</span> <span class="o">=</span> <span class="s2">&quot;STATE_MACHINE&quot;</span> <span class="c1"># For logging purposes</span>
+
+<span class="c1"># States</span>
+<div class="viewcode-block" id="BuildMap"><a class="viewcode-back" href="../index.html#state_machine.BuildMap">[docs]</a><span class="k">class</span> <span class="nc">BuildMap</span><span class="p">(</span><span class="n">State</span><span class="p">):</span>
+	<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">	</span>
+<span class="sd">	This class represents the implementation of the STATE_BUILD_MAP state.</span>
+<span class="sd">	</span>
+<span class="sd">	Attributes</span>
+<span class="sd">	----------</span>
+<span class="sd">	protege_helper: :mod:`state_helper.ProtegeHelper`</span>
+<span class="sd">		Class attribute to deal with `armor_py_api &lt;https://github.com/EmaroLab/armor_py_api&gt;`_</span>
+<span class="sd">	</span>
+<span class="sd">	Methods</span>
+<span class="sd">	----------</span>
+<span class="sd">	execute(userdata)</span>
+<span class="sd">		Class method that is called automatically when the state is active</span>
+<span class="sd">	</span>
+<span class="sd">	Notes</span>
+<span class="sd">	----------</span>
+<span class="sd">		Possible outputs:</span>
+<span class="sd">			[TRANS_MAP_BUILT, TRANS_MAP_NOT_BUILT]</span>
+<span class="sd">		Transitions:</span>
+<span class="sd">			TRANS_MAP_BUILT -&gt; STATE_START_EXPLORING</span>
+<span class="sd">			</span>
+<span class="sd">			TRANS_MAP_NOT_BUILT -&gt; STATE_BUILD_MAP</span>
+<span class="sd">		userdata:</span>
+<span class="sd">			Input: </span>
+<span class="sd">				None</span>
+<span class="sd">			</span>
+<span class="sd">			Output: </span>
+<span class="sd">				None</span>
+<span class="sd">			</span>
+<span class="sd">	&#39;&#39;&#39;</span>
+	<span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">protegeHelper</span><span class="p">):</span>
+		<span class="c1"># Protege Helper class that helps with dealing with armor_py_api client</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">helper</span> <span class="o">=</span> <span class="n">protegeHelper</span>
+		<span class="n">State</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outcomes</span><span class="o">=</span><span class="p">[</span><span class="n">TRANS_MAP_BUILT</span><span class="p">,</span> <span class="n">TRANS_MAP_NOT_BUILT</span><span class="p">])</span>
+<div class="viewcode-block" id="BuildMap.execute"><a class="viewcode-back" href="../index.html#state_machine.BuildMap.execute">[docs]</a>	<span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">userdata</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		</span>
+<span class="sd">		Does the building of the topological map using *protege_helper*. After the succesfull building moves the robot to location &#39;E&#39; </span>
+<span class="sd">		</span>
+<span class="sd">		Arguments</span>
+<span class="sd">		----------</span>
+<span class="sd">		userdata : dictionary</span>
+<span class="sd">			dictionary of keys for trasmitting the data between the states.</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		str</span>
+<span class="sd">			Possible outputs.</span>
+<span class="sd">			</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">rospy</span><span class="o">.</span><span class="n">loginfo</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">tag_log</span><span class="p">(</span><span class="s2">&quot;Building the map, please wait ...&quot;</span><span class="p">,</span> <span class="n">LOG_TAG</span> <span class="o">+</span> <span class="s2">&quot; &gt;&gt;&gt; &quot;</span> <span class="o">+</span> <span class="n">STATE_BUILD_MAP</span><span class="p">))</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">helper</span><span class="o">.</span><span class="n">build_map</span><span class="p">():</span> <span class="c1"># If success, then do the left routine</span>
+			<span class="c1"># Logging</span>
+			<span class="n">rospy</span><span class="o">.</span><span class="n">loginfo</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">tag_log</span><span class="p">(</span><span class="s2">&quot;Great. Map has been built.&quot;</span><span class="p">,</span> <span class="n">LOG_TAG</span> <span class="o">+</span> <span class="s2">&quot; &gt;&gt;&gt; &quot;</span> <span class="o">+</span> <span class="n">STATE_BUILD_MAP</span><span class="p">))</span>
+			<span class="n">log</span> <span class="o">=</span> <span class="s2">&quot;Okay. </span><span class="se">\n</span><span class="s2"> List of rooms = </span><span class="si">{0}</span><span class="s2"> </span><span class="se">\n</span><span class="s2"> List of corridors = </span><span class="si">{1}</span><span class="s2"> </span><span class="se">\n</span><span class="s2"> List of doors = </span><span class="si">{2}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">helper</span><span class="o">.</span><span class="n">get_rooms_list</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">helper</span><span class="o">.</span><span class="n">get_corridors_list</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">helper</span><span class="o">.</span><span class="n">get_doors_list</span><span class="p">())</span>
+			<span class="n">rospy</span><span class="o">.</span><span class="n">loginfo</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">tag_log</span><span class="p">(</span><span class="n">log</span><span class="p">,</span> <span class="n">LOG_TAG</span> <span class="o">+</span> <span class="s2">&quot; &gt;&gt;&gt; &quot;</span> <span class="o">+</span> <span class="n">STATE_BUILD_MAP</span><span class="p">))</span>
+			<span class="c1"># Retrieve the time and move the robot to the starting location &#39;E&#39;</span>
+			<span class="n">t0</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">rospy</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">to_sec</span><span class="p">())</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">helper</span><span class="o">.</span><span class="n">move_robot</span><span class="p">(</span><span class="s1">&#39;E&#39;</span><span class="p">,</span> <span class="n">t0</span><span class="p">)</span>
+			<span class="n">log</span> <span class="o">=</span> <span class="s2">&quot;The robot is now in location </span><span class="si">{0}</span><span class="s2"> at time </span><span class="si">{1}</span><span class="s2"> nsec&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;E&#39;</span><span class="p">,</span> <span class="n">t0</span><span class="p">)</span>
+			<span class="n">rospy</span><span class="o">.</span><span class="n">loginfo</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">tag_log</span><span class="p">(</span><span class="n">log</span><span class="p">,</span> <span class="n">LOG_TAG</span> <span class="o">+</span> <span class="s2">&quot; &gt;&gt;&gt; &quot;</span> <span class="o">+</span> <span class="n">STATE_BUILD_MAP</span><span class="p">))</span>
+			<span class="c1"># Return that the map has been built</span>
+			<span class="k">return</span> <span class="n">TRANS_MAP_BUILT</span>
+		<span class="k">else</span><span class="p">:</span> <span class="c1"># If some error occured, try again</span>
+			<span class="n">rospy</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+			<span class="n">rospy</span><span class="o">.</span><span class="n">logerr</span><span class="p">(</span><span class="s2">&quot;Unexpected error when trying to build the map. Trying again..&quot;</span><span class="p">)</span>
+			<span class="k">return</span> <span class="n">TRANS_MAP_NOT_BUILT</span></div></div>
+
+<div class="viewcode-block" id="StartBehavior"><a class="viewcode-back" href="../index.html#state_machine.StartBehavior">[docs]</a><span class="k">class</span> <span class="nc">StartBehavior</span><span class="p">(</span><span class="n">State</span><span class="p">):</span>
+
+	<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">	</span>
+<span class="sd">	This class represents the implementation of the STATE_START_BEHAVIOR state.</span>
+<span class="sd">	</span>
+<span class="sd">	Attributes</span>
+<span class="sd">	----------</span>
+<span class="sd">	protege_helper: :mod:`state_helper.ProtegeHelper`</span>
+<span class="sd">		Class attribute to deal with `armor_py_api &lt;https://github.com/EmaroLab/armor_py_api&gt;`_</span>
+<span class="sd">	interface_helper: :mod:`state_helper.interface_helper`</span>
+<span class="sd">		Class attribute to deal with the interface logic</span>
+<span class="sd">	</span>
+<span class="sd">	Methods</span>
+<span class="sd">	----------</span>
+<span class="sd">	execute(userdata)</span>
+<span class="sd">		Class method which is called automatically when the state is active</span>
+<span class="sd">	</span>
+<span class="sd">	Notes</span>
+<span class="sd">	----------</span>
+<span class="sd">		Possible outputs:</span>
+<span class="sd">			[TRANS_REPEAT, TRANS_PLAN_TO_LOCATION]</span>
+<span class="sd">		Transitions:</span>
+<span class="sd">			TRANS_REPEAT -&gt; STATE_START_EXPLORING</span>
+<span class="sd">			</span>
+<span class="sd">			TRANS_PLAN_TO_LOCATION -&gt; STATE_PLAN_TO_LOCATION</span>
+<span class="sd">		userdata:</span>
+<span class="sd">			Input: </span>
+<span class="sd">				None</span>
+<span class="sd">			</span>
+<span class="sd">			Output: </span>
+<span class="sd">				location(str)</span>
+<span class="sd">					String representation of the next location</span>
+<span class="sd">			</span>
+<span class="sd">	&#39;&#39;&#39;</span>
+	<span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">protegeHelper</span><span class="p">,</span> <span class="n">interfaceHelper</span><span class="p">):</span>
+		<span class="n">State</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outcomes</span><span class="o">=</span><span class="p">[</span><span class="n">TRANS_REPEAT</span><span class="p">,</span> <span class="n">TRANS_PLAN_TO_LOCATION</span><span class="p">],</span> <span class="n">output_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;location&#39;</span><span class="p">])</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_pHelper</span> <span class="o">=</span> <span class="n">protegeHelper</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span> <span class="o">=</span> <span class="n">interfaceHelper</span>
+<div class="viewcode-block" id="StartBehavior.execute"><a class="viewcode-back" href="../index.html#state_machine.StartBehavior.execute">[docs]</a>	<span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">userdata</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		</span>
+<span class="sd">		Decides which should be the next location where the robot needs to go and sends this location to the planning state		</span>
+<span class="sd">		</span>
+<span class="sd">		Arguments</span>
+<span class="sd">		----------</span>
+<span class="sd">		userdata : dictionary</span>
+<span class="sd">			dictionary of keys for trasmitting the data between the states.</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		str</span>
+<span class="sd">			Possible outputs.</span>
+<span class="sd">			</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="c1"># Get from Protege the list of all reachable locations</span>
+		<span class="n">reachable_locations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pHelper</span><span class="o">.</span><span class="n">canReach</span><span class="p">()</span>
+		<span class="k">if</span> <span class="n">reachable_locations</span><span class="p">:</span> <span class="c1"># Check if the returned list is not empty</span>
+			<span class="n">userdata</span><span class="o">.</span><span class="n">location</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pHelper</span><span class="o">.</span><span class="n">decide_next_location</span><span class="p">()</span> <span class="c1"># Decide next location</span>
+			<span class="k">return</span> <span class="n">TRANS_PLAN_TO_LOCATION</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">rospy</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+			<span class="n">rospy</span><span class="o">.</span><span class="n">logerr</span><span class="p">(</span><span class="s2">&quot;Cannot obtain the list of reachable locations from armor_py_api&quot;</span><span class="p">)</span>
+			<span class="k">return</span> <span class="n">TRANS_REPEAT</span></div></div>
+
+
+<div class="viewcode-block" id="PlanToChargingStation"><a class="viewcode-back" href="../index.html#state_machine.PlanToChargingStation">[docs]</a><span class="k">class</span> <span class="nc">PlanToChargingStation</span><span class="p">(</span><span class="n">State</span><span class="p">):</span>
+	
+	<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">	</span>
+<span class="sd">	This class represents the implementation of the STATE_PLAN_TO_CHARGING_STATION state.</span>
+<span class="sd">	</span>
+<span class="sd">	Attributes</span>
+<span class="sd">	----------</span>
+<span class="sd">	protege_helper: :mod:`state_helper.ProtegeHelper`</span>
+<span class="sd">		Class attribute to deal with `armor_py_api &lt;https://github.com/EmaroLab/armor_py_api&gt;`_</span>
+<span class="sd">	interface_helper: :mod:`state_helper.interface_helper`</span>
+<span class="sd">		Class attribute to deal with the interface logic</span>
+<span class="sd">	</span>
+<span class="sd">	Methods</span>
+<span class="sd">	----------</span>
+<span class="sd">	execute(userdata)</span>
+<span class="sd">		Class method which is called automatically when the state is active</span>
+<span class="sd">	</span>
+<span class="sd">	Notes</span>
+<span class="sd">	----------</span>
+<span class="sd">		Possible outputs:</span>
+<span class="sd">			[TRANS_BATTERY_FULL, TRANS_IN_CHARGING_LOCATION, TRANS_GO_TO_LOCATION]</span>
+<span class="sd">		Transitions:</span>
+<span class="sd">			TRANS_BATTERY_FULL -&gt; STATE_START_EXPLORING</span>
+<span class="sd">			</span>
+<span class="sd">			TRANS_IN_CHARGING_LOCATION -&gt; STATE_RECHARGE</span>
+<span class="sd">			</span>
+<span class="sd">			TRANS_GO_TO_LOCATION -&gt; STATE_GO_TO_CHARGING_STATION</span>
+<span class="sd">		userdata:</span>
+<span class="sd">			Input: </span>
+<span class="sd">				None</span>
+<span class="sd">			</span>
+<span class="sd">			Output: </span>
+<span class="sd">				t0(long)</span>
+<span class="sd">					Timestamp now</span>
+<span class="sd">				via_point(array)</span>
+<span class="sd">					Array of via points computed by the planner service</span>
+<span class="sd">				room(str)</span>
+<span class="sd">					String representation of the location</span>
+<span class="sd">					</span>
+<span class="sd">	&#39;&#39;&#39;</span>
+	<span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface_helper</span><span class="p">,</span> <span class="n">protege_helper</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span> <span class="o">=</span> <span class="n">interface_helper</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_pHelper</span> <span class="o">=</span> <span class="n">protege_helper</span>
+		<span class="n">State</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outcomes</span> <span class="o">=</span> <span class="p">[</span><span class="n">TRANS_BATTERY_FULL</span><span class="p">,</span> <span class="n">TRANS_IN_CHARGING_LOCATION</span><span class="p">,</span> <span class="n">TRANS_GO_TO_LOCATION</span><span class="p">],</span> <span class="n">input_keys</span> <span class="o">=</span> <span class="p">[],</span> <span class="n">output_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;t0&#39;</span><span class="p">,</span> <span class="s1">&#39;via_points&#39;</span><span class="p">,</span> <span class="s1">&#39;room&#39;</span><span class="p">])</span>
+	
+<div class="viewcode-block" id="PlanToChargingStation.execute"><a class="viewcode-back" href="../index.html#state_machine.PlanToChargingStation.execute">[docs]</a>	<span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">userdata</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		</span>
+<span class="sd">		Using the Planner service, computes the plan (via points) to the charging station. If the robot cannot reach the location containing the charging station, finds the most closest among reachable locations and computes plan to that location</span>
+<span class="sd">		</span>
+<span class="sd">		Arguments</span>
+<span class="sd">		----------</span>
+<span class="sd">		userdata : dictionary</span>
+<span class="sd">			dictionary of keys for trasmitting the data between the states.</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		str</span>
+<span class="sd">			Possible outputs.</span>
+<span class="sd">			</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">goal</span> <span class="o">=</span> <span class="n">PlanGoal</span><span class="p">()</span> <span class="c1"># Initialize planning goal</span>
+		<span class="n">charging_location</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">get_charging_location</span><span class="p">()</span> <span class="c1"># Get the location containing the charging station</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pHelper</span><span class="o">.</span><span class="n">get_current_location</span><span class="p">()</span> <span class="o">==</span> <span class="n">charging_location</span><span class="p">:</span> <span class="c1"># If the robot is already in the location containing the charging station, then go to recharge state</span>
+			<span class="n">userdata</span><span class="o">.</span><span class="n">t0</span> <span class="o">=</span> <span class="n">rospy</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">to_sec</span><span class="p">()</span>
+			<span class="k">return</span> <span class="n">TRANS_IN_CHARGING_LOCATION</span>
+		<span class="k">else</span><span class="p">:</span> <span class="c1"># If not, then plan the path to reach that location</span>
+			<span class="c1"># Get the next reachable location that is closer to the charging station</span>
+			<span class="n">next_location</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pHelper</span><span class="o">.</span><span class="n">plan_to_recharge_station</span><span class="p">(</span><span class="n">charging_location</span><span class="p">)</span>
+			<span class="c1"># Retrieve the dictionary contatining location coordinates pair</span>
+			<span class="nb">dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">get_coord_dict</span><span class="p">()</span>
+			<span class="c1"># Define the target coordinates</span>
+			<span class="n">goal</span><span class="o">.</span><span class="n">target</span> <span class="o">=</span> <span class="n">Point</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="nb">dict</span><span class="p">[</span><span class="n">next_location</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">y</span><span class="o">=</span><span class="nb">dict</span><span class="p">[</span><span class="n">next_location</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+			<span class="c1"># Send goal</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">planner_client</span><span class="o">.</span><span class="n">send_goal</span><span class="p">(</span><span class="n">goal</span><span class="p">)</span>
+			<span class="c1"># Logging</span>
+			<span class="n">log</span> <span class="o">=</span> <span class="s2">&quot;Robot has low battery. Need to go to charging station. Therefore, planning to go in location </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">next_location</span><span class="p">)</span>
+			<span class="n">rospy</span><span class="o">.</span><span class="n">loginfo</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">tag_log</span><span class="p">(</span><span class="n">log</span><span class="p">,</span> <span class="n">LOG_TAG</span> <span class="o">+</span> <span class="s2">&quot; &gt;&gt;&gt; &quot;</span> <span class="o">+</span> <span class="n">STATE_PLAN_TO_CHARGING_LOCATION</span><span class="p">))</span>
+			<span class="c1"># Do the planning routine</span>
+			<span class="k">while</span> <span class="ow">not</span> <span class="n">rospy</span><span class="o">.</span><span class="n">is_shutdown</span><span class="p">():</span>
+				<span class="c1"># Acquire mutex to preserve synchronization</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+				<span class="k">try</span><span class="p">:</span>
+					<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">is_battery_low</span><span class="p">():</span> <span class="c1"># If somehow the battery go recharged ( Not possible in the real life scenario, however, to make random sense work )</span>
+						<span class="n">rospy</span><span class="o">.</span><span class="n">loginfo</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">tag_log</span><span class="p">(</span><span class="s2">&quot;Miracle. Robot&#39;s battery got full...&quot;</span><span class="p">,</span> <span class="n">LOG_TAG</span> <span class="o">+</span> <span class="s2">&quot; &gt;&gt;&gt; &quot;</span> <span class="o">+</span> <span class="n">STATE_PLAN_TO_CHARGING_LOCATION</span><span class="p">))</span>
+						<span class="c1"># Cancel current goal</span>
+						<span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">planner_client</span><span class="o">.</span><span class="n">cancel_goals</span><span class="p">()</span>
+						<span class="k">return</span> <span class="n">TRANS_BATTERY_FULL</span>
+					<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">planner_client</span><span class="o">.</span><span class="n">is_done</span><span class="p">():</span> <span class="c1"># If done the planning, send the via points to the next state and the location where the robot needs to go</span>
+						<span class="n">userdata</span><span class="o">.</span><span class="n">via_points</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">planner_client</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span><span class="o">.</span><span class="n">via_points</span>
+						<span class="n">userdata</span><span class="o">.</span><span class="n">room</span> <span class="o">=</span> <span class="n">next_location</span>
+						<span class="k">return</span> <span class="n">TRANS_GO_TO_LOCATION</span>
+				<span class="k">finally</span><span class="p">:</span>
+					<span class="c1"># Release the mutex</span>
+					<span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+				<span class="n">rospy</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">LOOP_SLEEP_TIME</span><span class="p">)</span></div></div>
+				
+				
+<div class="viewcode-block" id="GoToChargingStation"><a class="viewcode-back" href="../index.html#state_machine.GoToChargingStation">[docs]</a><span class="k">class</span> <span class="nc">GoToChargingStation</span><span class="p">(</span><span class="n">State</span><span class="p">):</span>
+	
+	<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">	</span>
+<span class="sd">	This class represents the implementation of the STATE_GO_TO_CHARGING_STATION state.</span>
+<span class="sd">	</span>
+<span class="sd">	Attributes</span>
+<span class="sd">	----------</span>
+<span class="sd">	protege_helper: :mod:`state_helper.ProtegeHelper`</span>
+<span class="sd">		Class attribute to deal with `armor_py_api &lt;https://github.com/EmaroLab/armor_py_api&gt;`_</span>
+<span class="sd">	interface_helper: :mod:`state_helper.interface_helper`</span>
+<span class="sd">		Class attribute to deal with the interface logic</span>
+<span class="sd">	</span>
+<span class="sd">	Methods</span>
+<span class="sd">	----------</span>
+<span class="sd">	execute(userdata)</span>
+<span class="sd">		Class method which is called automatically when the state is active</span>
+<span class="sd">	</span>
+<span class="sd">	Notes</span>
+<span class="sd">	----------</span>
+<span class="sd">		Possible outputs:</span>
+<span class="sd">			[TRANS_BATTERY_FULL, TRANS_IN_CHARGING_LOCATION, TRANS_NOT_IN_CHARGING_LOCATION]</span>
+<span class="sd">		Transitions:</span>
+<span class="sd">			TRANS_BATTERY_FULL -&gt; STATE_START_EXPLORING</span>
+<span class="sd">			</span>
+<span class="sd">			TRANS_IN_CHARGING_LOCATION -&gt; STATE_RECHARGE</span>
+<span class="sd">			</span>
+<span class="sd">			TRANS_NOT_IN_CHARGING_LOCATION -&gt; STATE_PLAN_TO_CHARGING_STATION</span>
+<span class="sd">		userdata:</span>
+<span class="sd">			Input: </span>
+<span class="sd">				via_points(array):</span>
+<span class="sd">					Array of via points computed by the planner service</span>
+<span class="sd">				room(str):</span>
+<span class="sd">					String representation of the location where the robot needs to go</span>
+<span class="sd">			Output: </span>
+<span class="sd">				t0(long)</span>
+<span class="sd">					Timestamp now</span>
+<span class="sd">					</span>
+<span class="sd">	&#39;&#39;&#39;</span>
+	
+	<span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface_helper</span><span class="p">,</span> <span class="n">protege_helper</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span> <span class="o">=</span> <span class="n">interface_helper</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_pHelper</span> <span class="o">=</span> <span class="n">protege_helper</span>
+		<span class="n">State</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outcomes</span> <span class="o">=</span> <span class="p">[</span><span class="n">TRANS_BATTERY_FULL</span><span class="p">,</span> <span class="n">TRANS_IN_CHARGING_LOCATION</span><span class="p">,</span> <span class="n">TRANS_NOT_IN_CHARGING_LOCATION</span><span class="p">],</span> <span class="n">input_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;via_points&#39;</span><span class="p">,</span> <span class="s1">&#39;room&#39;</span><span class="p">],</span> <span class="n">output_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;t0&#39;</span><span class="p">])</span>
+	
+<div class="viewcode-block" id="GoToChargingStation.execute"><a class="viewcode-back" href="../index.html#state_machine.GoToChargingStation.execute">[docs]</a>	<span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">userdata</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		</span>
+<span class="sd">		Follows the plan given by the previous state and also moves the robot in the ontology to the next location. If the robot after that manipulation is in location containing the charging station, transits to the charging state</span>
+<span class="sd">		</span>
+<span class="sd">		Arguments</span>
+<span class="sd">		----------</span>
+<span class="sd">		userdata : dictionary</span>
+<span class="sd">			dictionary of keys for trasmitting the data between the states.</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		str</span>
+<span class="sd">			Possible outputs.</span>
+<span class="sd">			</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="c1"># Define the Control Goal for the Controller service</span>
+		<span class="n">goal</span> <span class="o">=</span> <span class="n">ControlGoal</span><span class="p">(</span><span class="n">via_points</span><span class="o">=</span><span class="n">userdata</span><span class="o">.</span><span class="n">via_points</span><span class="p">)</span>
+		<span class="c1"># Retrieve the location containing the charging station</span>
+		<span class="n">charging_location</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">get_charging_location</span><span class="p">()</span>
+		<span class="c1"># Send goal to the Controller service</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">controller_client</span><span class="o">.</span><span class="n">send_goal</span><span class="p">(</span><span class="n">goal</span><span class="p">)</span>
+		<span class="c1"># Logging</span>
+		<span class="n">log</span> <span class="o">=</span> <span class="s2">&quot;Robot has low battery. Need to go to charging station. Therefore, following the plan to reach a room </span><span class="si">{0}</span><span class="s2"> ...&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">userdata</span><span class="o">.</span><span class="n">room</span><span class="p">)</span>
+		<span class="n">rospy</span><span class="o">.</span><span class="n">loginfo</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">tag_log</span><span class="p">(</span><span class="n">log</span><span class="p">,</span> <span class="n">LOG_TAG</span> <span class="o">+</span> <span class="s2">&quot; &gt;&gt;&gt; &quot;</span> <span class="o">+</span> <span class="n">STATE_GO_TO_CHARGING_LOCATION</span><span class="p">))</span>
+		<span class="c1"># Wait for the action server computation</span>
+		<span class="k">while</span> <span class="ow">not</span> <span class="n">rospy</span><span class="o">.</span><span class="n">is_shutdown</span><span class="p">():</span>
+			<span class="c1"># Acquire the mutex to assure data consistencies</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+			<span class="k">try</span><span class="p">:</span>
+				<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">is_battery_low</span><span class="p">():</span> <span class="c1"># If somehow the battery go recharged ( Not possible in the real life scenario, however, to make random sense work )</span>
+					<span class="n">rospy</span><span class="o">.</span><span class="n">loginfo</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">tag_log</span><span class="p">(</span><span class="s2">&quot;Miracle. Robot&#39;s battery got full...&quot;</span><span class="p">,</span> <span class="n">LOG_TAG</span> <span class="o">+</span> <span class="s2">&quot; &gt;&gt;&gt; &quot;</span> <span class="o">+</span> <span class="n">STATE_GO_TO_CHARGING_LOCATION</span><span class="p">))</span>
+					<span class="c1"># Cancel current goal</span>
+					<span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">controller_client</span><span class="o">.</span><span class="n">cancel_goals</span><span class="p">()</span>
+					<span class="k">return</span> <span class="n">TRANS_BATTERY_FULL</span>
+				<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">controller_client</span><span class="o">.</span><span class="n">is_done</span><span class="p">():</span> <span class="c1"># If the Controller service is done </span>
+					<span class="c1"># Move the robot in the ontology</span>
+					<span class="n">t</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">rospy</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">to_sec</span><span class="p">())</span>
+					<span class="bp">self</span><span class="o">.</span><span class="n">_pHelper</span><span class="o">.</span><span class="n">move_robot</span><span class="p">(</span><span class="n">userdata</span><span class="o">.</span><span class="n">room</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+					<span class="c1"># Logging</span>
+					<span class="n">log</span> <span class="o">=</span> <span class="s2">&quot;The robot is now in location </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">userdata</span><span class="o">.</span><span class="n">room</span><span class="p">)</span>
+					<span class="n">rospy</span><span class="o">.</span><span class="n">loginfo</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">tag_log</span><span class="p">(</span><span class="n">log</span><span class="p">,</span> <span class="n">LOG_TAG</span> <span class="o">+</span> <span class="s2">&quot; &gt;&gt;&gt; &quot;</span> <span class="o">+</span> <span class="n">STATE_GO_TO_CHARGING_LOCATION</span><span class="p">))</span>
+					<span class="c1"># If the robot is in location containing the charging station, then go to recharge state</span>
+					<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pHelper</span><span class="o">.</span><span class="n">get_current_location</span><span class="p">()</span> <span class="o">==</span> <span class="n">charging_location</span><span class="p">:</span>
+						<span class="n">userdata</span><span class="o">.</span><span class="n">t0</span> <span class="o">=</span> <span class="n">rospy</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">to_sec</span><span class="p">()</span>
+						<span class="k">return</span> <span class="n">TRANS_IN_CHARGING_LOCATION</span>
+					<span class="k">else</span><span class="p">:</span>
+						<span class="c1"># Else repeat the routine</span>
+						<span class="k">return</span> <span class="n">TRANS_NOT_IN_CHARGING_LOCATION</span>
+			<span class="k">finally</span><span class="p">:</span>
+				<span class="c1"># Release the mutex to unblock the `self._helper` subscription threads if they are waiting.</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+			<span class="c1"># Wait for a reasonably small amount of time to allow `self._helper` processing stimulus (eventually).</span>
+			<span class="n">rospy</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">LOOP_SLEEP_TIME</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="Recharge"><a class="viewcode-back" href="../index.html#state_machine.Recharge">[docs]</a><span class="k">class</span> <span class="nc">Recharge</span><span class="p">(</span><span class="n">State</span><span class="p">):</span>
+	
+	<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">	</span>
+<span class="sd">	This class represents the implementation of the STATE_RECHARGE state.</span>
+<span class="sd">	</span>
+<span class="sd">	Attributes</span>
+<span class="sd">	----------</span>
+<span class="sd">	protege_helper: :mod:`state_helper.ProtegeHelper`</span>
+<span class="sd">		Class attribute to deal with `armor_py_api &lt;https://github.com/EmaroLab/armor_py_api&gt;`_</span>
+<span class="sd">	interface_helper: :mod:`state_helper.interface_helper`</span>
+<span class="sd">		Class attribute to deal with the interface logic</span>
+<span class="sd">	</span>
+<span class="sd">	Methods</span>
+<span class="sd">	----------</span>
+<span class="sd">	execute(userdata)</span>
+<span class="sd">		Class method which is called automatically when the state is active</span>
+<span class="sd">	non_blocking_wait(t0)</span>
+<span class="sd">		Class method that does non blocking wait for some amount of time</span>
+<span class="sd">	Notes</span>
+<span class="sd">	----------</span>
+<span class="sd">		Possible outputs:</span>
+<span class="sd">			[TRANS_BATTERY_FULL, TRANS_BATTERY_LOW]</span>
+<span class="sd">		Transitions:</span>
+<span class="sd">			TRANS_BATTERY_FULL -&gt; STATE_START_EXPLORING</span>
+<span class="sd">			</span>
+<span class="sd">			TRANS_BATTERY_LOW -&gt; STATE_RECHARGE</span>
+<span class="sd">		userdata:</span>
+<span class="sd">			Input: </span>
+<span class="sd">				t0(long)</span>
+<span class="sd">					Timestamp now</span>
+<span class="sd">			Output: </span>
+<span class="sd">				None</span>
+<span class="sd">					</span>
+<span class="sd">	&#39;&#39;&#39;</span>
+	
+	<span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface_helper</span><span class="p">):</span>
+		<span class="n">State</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outcomes</span><span class="o">=</span><span class="p">[</span><span class="n">TRANS_BATTERY_FULL</span><span class="p">,</span> <span class="n">TRANS_BATTERY_LOW</span><span class="p">],</span> <span class="n">input_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;t0&#39;</span><span class="p">])</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span> <span class="o">=</span> <span class="n">interface_helper</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">charging_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">charging_time</span>
+<div class="viewcode-block" id="Recharge.execute"><a class="viewcode-back" href="../index.html#state_machine.Recharge.execute">[docs]</a>	<span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">userdata</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		</span>
+<span class="sd">		Simulates the recharging of the battery by waiting for the amount of time specified in the parameter server. Based on the timestamp given by the previous states when the battery got low and the charging time, calculates and prints the current battery&#39;s percent.</span>
+<span class="sd">		Also, if the random sense is active, just waits until the battery&#39;s topic receives a message that battery is full.</span>
+<span class="sd">		</span>
+<span class="sd">		Arguments</span>
+<span class="sd">		----------</span>
+<span class="sd">		userdata : dictionary</span>
+<span class="sd">			dictionary of keys for trasmitting the data between the states.</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		str</span>
+<span class="sd">			Possible outputs.</span>
+<span class="sd">			</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">rospy</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">randomness</span><span class="p">:</span> <span class="c1"># If the sense is manual, then simulate like the robot is charging; </span>
+			<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">non_blocking_wait</span><span class="p">(</span><span class="n">userdata</span><span class="o">.</span><span class="n">t0</span><span class="p">):</span> <span class="c1"># Simulate charging the battery</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">reset_battery</span><span class="p">()</span> <span class="c1"># Reset the battery to say that is is not low anymore</span>
+		<span class="k">else</span><span class="p">:</span> <span class="c1"># If the sense is random, then just wait until the battery topic gets informed that the battery is full</span>
+			<span class="n">rospy</span><span class="o">.</span><span class="n">loginfo</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">tag_log</span><span class="p">(</span><span class="s2">&quot;Waiting until the battery gets full...&quot;</span><span class="p">,</span> <span class="n">LOG_TAG</span> <span class="o">+</span> <span class="s2">&quot; &gt;&gt;&gt; &quot;</span> <span class="o">+</span> <span class="n">STATE_RECHARGE</span><span class="p">))</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">is_battery_low</span><span class="p">():</span>
+			<span class="k">return</span> <span class="n">TRANS_BATTERY_FULL</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="k">return</span> <span class="n">TRANS_BATTERY_LOW</span></div>
+<div class="viewcode-block" id="Recharge.non_blocking_wait"><a class="viewcode-back" href="../index.html#state_machine.Recharge.non_blocking_wait">[docs]</a>	<span class="k">def</span> <span class="nf">non_blocking_wait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t0</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		</span>
+<span class="sd">		Function that simulates the wait without blocking the main program. Also, simulates the charging procedure</span>
+
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		t0 : long</span>
+<span class="sd">			Timestamp when the battery got low.</span>
+<span class="sd">		Returns</span>
+<span class="sd">		----------</span>
+<span class="sd">		flag : bool</span>
+<span class="sd">			If the waiting period is over or not</span>
+<span class="sd">			</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="c1"># Calculate the current percent of battery based on the time when it got low and the charging time</span>
+		<span class="n">percent</span> <span class="o">=</span> <span class="p">(</span><span class="n">rospy</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">to_sec</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">charging_time</span> <span class="o">*</span> <span class="mi">100</span>
+		<span class="c1"># Logging</span>
+		<span class="n">log</span> <span class="o">=</span> <span class="s2">&quot;Battery is </span><span class="si">{0}</span><span class="s2">%&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">percent</span><span class="p">)</span>
+		<span class="n">rospy</span><span class="o">.</span><span class="n">loginfo</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">tag_log</span><span class="p">(</span><span class="n">log</span><span class="p">,</span> <span class="n">LOG_TAG</span> <span class="o">+</span> <span class="s2">&quot; &gt;&gt;&gt; &quot;</span> <span class="o">+</span> <span class="n">STATE_RECHARGE</span><span class="p">))</span>
+		<span class="k">return</span> <span class="n">t0</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">charging_time</span> <span class="o">&lt;</span> <span class="n">rospy</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">to_sec</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="PlanToLocation"><a class="viewcode-back" href="../index.html#state_machine.PlanToLocation">[docs]</a><span class="k">class</span> <span class="nc">PlanToLocation</span><span class="p">(</span><span class="n">State</span><span class="p">):</span>
+	
+	<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">	</span>
+<span class="sd">	This class represents the implementation of the STATE_PLAN_TO_LOCATION state.</span>
+<span class="sd">	</span>
+<span class="sd">	Attributes</span>
+<span class="sd">	----------</span>
+<span class="sd">	interface_helper: :mod:`state_helper.interface_helper`</span>
+<span class="sd">		Class attribute to deal with the interface logic</span>
+<span class="sd">	</span>
+<span class="sd">	Methods</span>
+<span class="sd">	----------</span>
+<span class="sd">	execute(userdata)</span>
+<span class="sd">		Class method which is called automatically when the state is active</span>
+
+<span class="sd">	Notes</span>
+<span class="sd">	----------</span>
+<span class="sd">		Possible outputs:</span>
+<span class="sd">			[TRANS_RECHARGING, TRANS_PLANNED_TO_LOCATION]</span>
+<span class="sd">		Transitions:</span>
+<span class="sd">			TRANS_RECHARGING -&gt; STATE_CHARGING_ROUTINE</span>
+<span class="sd">			</span>
+<span class="sd">			TRANS_PLANNED_TO_LOCATION -&gt; STATE_GO_TO_LOCATION</span>
+<span class="sd">		userdata:</span>
+<span class="sd">			Input: </span>
+<span class="sd">				location(str):</span>
+<span class="sd">					String representation of the next location</span>
+<span class="sd">			Output: </span>
+<span class="sd">				via_point(array):</span>
+<span class="sd">					Array of planned via points</span>
+<span class="sd">				room(str):</span>
+<span class="sd">					String representation of the next location</span>
+<span class="sd">					</span>
+<span class="sd">	&#39;&#39;&#39;</span>
+	
+	<span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface_helper</span><span class="p">):</span>
+		<span class="c1"># Get a reference to the interfaces with the other nodes of the architecture.</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span> <span class="o">=</span> <span class="n">interface_helper</span>
+		<span class="c1"># Initialise this state with possible transitions (i.e., valid outputs of the `execute` function).</span>
+		<span class="c1"># Also, set the `random_plan` variable, which will be eventually computed in the `execute` function and passed to the `GO_TO_RANDOM_POSE` state.</span>
+		<span class="n">State</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outcomes</span><span class="o">=</span><span class="p">[</span><span class="n">TRANS_RECHARGING</span><span class="p">,</span> <span class="n">TRANS_PLANNED_TO_LOCATION</span><span class="p">],</span> <span class="n">input_keys</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;location&#39;</span><span class="p">],</span> <span class="n">output_keys</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;via_points&#39;</span><span class="p">,</span> <span class="s1">&#39;room&#39;</span><span class="p">])</span>
+
+	<span class="c1"># Define the function performed each time a transition is such to enter in this state.</span>
+<div class="viewcode-block" id="PlanToLocation.execute"><a class="viewcode-back" href="../index.html#state_machine.PlanToLocation.execute">[docs]</a>	<span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">userdata</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		</span>
+<span class="sd">		Uses Planner service to compute the via points to the desired location. Also, check the battery meanwhile to ensure transition when it gets low.</span>
+<span class="sd">		</span>
+<span class="sd">		Arguments</span>
+<span class="sd">		----------</span>
+<span class="sd">		userdata : dictionary</span>
+<span class="sd">			dictionary of keys for trasmitting the data between the states.</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		str</span>
+<span class="sd">			Possible outputs.</span>
+<span class="sd">			</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="c1"># Define the Plan Goal</span>
+		<span class="n">goal</span> <span class="o">=</span> <span class="n">PlanGoal</span><span class="p">()</span>
+		<span class="c1"># Get the dictionary to retrieve the coordinates that need to be given to the planner</span>
+		<span class="nb">dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">get_coord_dict</span><span class="p">()</span>
+		<span class="c1"># Send the target to the Planner service with the coordinates for the next location</span>
+		<span class="n">goal</span><span class="o">.</span><span class="n">target</span> <span class="o">=</span> <span class="n">Point</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="nb">dict</span><span class="p">[</span><span class="n">userdata</span><span class="o">.</span><span class="n">location</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">y</span><span class="o">=</span><span class="nb">dict</span><span class="p">[</span><span class="n">userdata</span><span class="o">.</span><span class="n">location</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+		<span class="c1"># Invoke the planner action server.</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">planner_client</span><span class="o">.</span><span class="n">send_goal</span><span class="p">(</span><span class="n">goal</span><span class="p">)</span>
+		<span class="c1"># Logging</span>
+		<span class="n">log</span> <span class="o">=</span> <span class="s2">&quot;Planning to go in a location </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">userdata</span><span class="o">.</span><span class="n">location</span><span class="p">)</span>
+		<span class="n">rospy</span><span class="o">.</span><span class="n">loginfo</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">tag_log</span><span class="p">(</span><span class="n">log</span><span class="p">,</span> <span class="n">LOG_TAG</span> <span class="o">+</span> <span class="s2">&quot; &gt;&gt;&gt; &quot;</span> <span class="o">+</span> <span class="n">STATE_PLAN_TO_LOCATION</span><span class="p">))</span>
+		<span class="c1"># Wait for the action server computation.</span>
+		<span class="k">while</span> <span class="ow">not</span> <span class="n">rospy</span><span class="o">.</span><span class="n">is_shutdown</span><span class="p">():</span>
+			<span class="c1"># Acquire the mutex to assure data consistencies</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+			<span class="k">try</span><span class="p">:</span>
+				<span class="c1"># If the battery is low, then cancel the planning action server and take the TRANS_RECHARGING transition.</span>
+				<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">is_battery_low</span><span class="p">():</span>  
+					<span class="n">rospy</span><span class="o">.</span><span class="n">loginfo</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">tag_log</span><span class="p">(</span><span class="s2">&quot;Robot&#39;s battery got low..&quot;</span><span class="p">,</span> <span class="n">LOG_TAG</span> <span class="o">+</span> <span class="s2">&quot; &gt;&gt;&gt; &quot;</span> <span class="o">+</span> <span class="n">STATE_PLAN_TO_LOCATION</span><span class="p">))</span>
+					<span class="c1"># Cancel current goal</span>
+					<span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">planner_client</span><span class="o">.</span><span class="n">cancel_goals</span><span class="p">()</span>
+					<span class="k">return</span> <span class="n">TRANS_RECHARGING</span>
+
+				<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">planner_client</span><span class="o">.</span><span class="n">is_done</span><span class="p">():</span>
+					<span class="n">userdata</span><span class="o">.</span><span class="n">via_points</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">planner_client</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span><span class="o">.</span><span class="n">via_points</span>
+					<span class="n">userdata</span><span class="o">.</span><span class="n">room</span> <span class="o">=</span> <span class="n">userdata</span><span class="o">.</span><span class="n">location</span>
+					<span class="k">return</span> <span class="n">TRANS_PLANNED_TO_LOCATION</span>
+			<span class="k">finally</span><span class="p">:</span>
+				<span class="c1"># Release the mutex </span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+			<span class="c1"># Wait for a reasonably small amount of time </span>
+			<span class="n">rospy</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">LOOP_SLEEP_TIME</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="GoToLocation"><a class="viewcode-back" href="../index.html#state_machine.GoToLocation">[docs]</a><span class="k">class</span> <span class="nc">GoToLocation</span><span class="p">(</span><span class="n">State</span><span class="p">):</span>
+	
+	<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">	</span>
+<span class="sd">	This class represents the implementation of the STATE_GO_TO_LOCATION state.</span>
+<span class="sd">	</span>
+<span class="sd">	Attributes</span>
+<span class="sd">	----------</span>
+<span class="sd">	protege_helper: :mod:`state_helper.ProtegeHelper`</span>
+<span class="sd">		Class attribute to deal with `armor_py_api &lt;https://github.com/EmaroLab/armor_py_api&gt;`_</span>
+<span class="sd">	interface_helper: :mod:`state_helper.interface_helper`</span>
+<span class="sd">		Class attribute to deal with the interface logic</span>
+<span class="sd">	</span>
+<span class="sd">	Methods</span>
+<span class="sd">	----------</span>
+<span class="sd">	execute(userdata)</span>
+<span class="sd">		Class method which is called automatically when the state is active</span>
+<span class="sd">	</span>
+<span class="sd">	Notes</span>
+<span class="sd">	----------</span>
+<span class="sd">		Possible outputs:</span>
+<span class="sd">			[TRANS_WENT_TO_LOCATION, TRANS_RECHARGING]</span>
+<span class="sd">		Transitions:</span>
+<span class="sd">			TRANS_WENT_TO_LOCATION -&gt; STATE_WAIT_IN_LOCATION</span>
+<span class="sd">			</span>
+<span class="sd">			TRANS_RECHARGING -&gt; STATE_START_RECHARGING_ROUTINE</span>
+<span class="sd">		userdata:</span>
+<span class="sd">			Input: </span>
+<span class="sd">				via_points(array):</span>
+<span class="sd">					Array of via points computed by the planner service</span>
+<span class="sd">				room(str):</span>
+<span class="sd">					String representation of the location where the robot needs to go</span>
+<span class="sd">			Output: </span>
+<span class="sd">				None</span>
+<span class="sd">					</span>
+<span class="sd">	&#39;&#39;&#39;</span>
+	
+	<span class="c1"># Construct this class, i.e., initialise this state.</span>
+	<span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">protege_helper</span><span class="p">,</span> <span class="n">interface_helper</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span> <span class="o">=</span> <span class="n">interface_helper</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_pHelper</span> <span class="o">=</span> <span class="n">protege_helper</span>
+		<span class="n">State</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outcomes</span><span class="o">=</span><span class="p">[</span><span class="n">TRANS_WENT_TO_LOCATION</span><span class="p">,</span> <span class="n">TRANS_RECHARGING</span><span class="p">],</span> <span class="n">input_keys</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;via_points&#39;</span><span class="p">,</span> <span class="s1">&#39;room&#39;</span><span class="p">],</span> <span class="n">output_keys</span><span class="o">=</span><span class="p">[])</span>
+
+	<span class="c1"># Define the function performed each time a transition is such to enter in this state.</span>
+<div class="viewcode-block" id="GoToLocation.execute"><a class="viewcode-back" href="../index.html#state_machine.GoToLocation.execute">[docs]</a>	<span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">userdata</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		</span>
+<span class="sd">		Call Controller service to follow the plan given by the previous state. Also, checks the battery level in the meantime to ensure the transition to the charging routine if it got low.</span>
+<span class="sd">			</span>
+<span class="sd">		Arguments</span>
+<span class="sd">		----------</span>
+<span class="sd">		userdata : dictionary</span>
+<span class="sd">			dictionary of keys for trasmitting the data between the states.</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		str</span>
+<span class="sd">			Possible outputs.</span>
+<span class="sd">			</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="c1"># Start the action server for moving the robot through the planned via-points.</span>
+		<span class="n">goal</span> <span class="o">=</span> <span class="n">ControlGoal</span><span class="p">(</span><span class="n">via_points</span><span class="o">=</span><span class="n">userdata</span><span class="o">.</span><span class="n">via_points</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">controller_client</span><span class="o">.</span><span class="n">send_goal</span><span class="p">(</span><span class="n">goal</span><span class="p">)</span>
+		<span class="n">log</span> <span class="o">=</span> <span class="s2">&quot;Following the plan to reach a room </span><span class="si">{0}</span><span class="s2"> ...&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">userdata</span><span class="o">.</span><span class="n">room</span><span class="p">)</span>
+		<span class="n">rospy</span><span class="o">.</span><span class="n">loginfo</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">tag_log</span><span class="p">(</span><span class="n">log</span><span class="p">,</span> <span class="n">LOG_TAG</span> <span class="o">+</span> <span class="s2">&quot; &gt;&gt;&gt; &quot;</span> <span class="o">+</span> <span class="n">STATE_GO_TO_LOCATION</span><span class="p">))</span>
+		<span class="k">while</span> <span class="ow">not</span> <span class="n">rospy</span><span class="o">.</span><span class="n">is_shutdown</span><span class="p">():</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+			<span class="k">try</span><span class="p">:</span>
+				<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">is_battery_low</span><span class="p">():</span>
+					<span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">controller_client</span><span class="o">.</span><span class="n">cancel_goals</span><span class="p">()</span>
+					<span class="k">return</span> <span class="n">TRANS_RECHARGING</span>
+				<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">controller_client</span><span class="o">.</span><span class="n">is_done</span><span class="p">():</span>
+					<span class="n">t</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">rospy</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">to_sec</span><span class="p">())</span>
+					<span class="bp">self</span><span class="o">.</span><span class="n">_pHelper</span><span class="o">.</span><span class="n">move_robot</span><span class="p">(</span><span class="n">userdata</span><span class="o">.</span><span class="n">room</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+					<span class="n">log</span> <span class="o">=</span> <span class="s2">&quot;The robot is now in location </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">userdata</span><span class="o">.</span><span class="n">room</span><span class="p">)</span>
+					<span class="n">rospy</span><span class="o">.</span><span class="n">loginfo</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">tag_log</span><span class="p">(</span><span class="n">log</span><span class="p">,</span> <span class="n">LOG_TAG</span> <span class="o">+</span> <span class="s2">&quot; &gt;&gt;&gt; &quot;</span> <span class="o">+</span> <span class="n">STATE_GO_TO_LOCATION</span><span class="p">))</span>
+					<span class="k">return</span> <span class="n">TRANS_WENT_TO_LOCATION</span>
+			<span class="k">finally</span><span class="p">:</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+		<span class="n">rospy</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">LOOP_SLEEP_TIME</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="WaitInLocation"><a class="viewcode-back" href="../index.html#state_machine.WaitInLocation">[docs]</a><span class="k">class</span> <span class="nc">WaitInLocation</span><span class="p">(</span><span class="n">State</span><span class="p">):</span>
+	
+	<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">	</span>
+<span class="sd">	This class represents the implementation of the STATE_WAIT_IN_LOCATION state.</span>
+<span class="sd">	</span>
+<span class="sd">	Attributes</span>
+<span class="sd">	----------</span>
+<span class="sd">	interface_helper: :mod:`state_helper.interface_helper`</span>
+<span class="sd">		Class attribute to deal with the interface logic</span>
+<span class="sd">	</span>
+<span class="sd">	Methods</span>
+<span class="sd">	----------</span>
+<span class="sd">	execute(userdata)</span>
+<span class="sd">		Class method which is called automatically when the state is active</span>
+<span class="sd">	</span>
+<span class="sd">	Notes</span>
+<span class="sd">	----------</span>
+<span class="sd">		Possible outputs:</span>
+<span class="sd">			[TRANS_DONE_WAITING, TRANS_RECHARGING]</span>
+<span class="sd">		Transitions:</span>
+<span class="sd">			TRANS_DONE_WAITING -&gt; TRANS_REPEAT</span>
+<span class="sd">			</span>
+<span class="sd">			TRANS_RECHARGING -&gt; STATE_START_RECHARGING_ROUTINE</span>
+<span class="sd">		userdata:</span>
+<span class="sd">			Input: </span>
+<span class="sd">				None</span>
+<span class="sd">			Output: </span>
+<span class="sd">				t0(long):</span>
+<span class="sd">					Timestamp now</span>
+<span class="sd">					</span>
+<span class="sd">	&#39;&#39;&#39;</span>
+	
+	<span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface_helper</span><span class="p">):</span>
+		<span class="n">State</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outcomes</span><span class="o">=</span><span class="p">[</span><span class="n">TRANS_DONE_WAITING</span><span class="p">,</span> <span class="n">TRANS_RECHARGING</span><span class="p">],</span> <span class="n">output_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;t0&#39;</span><span class="p">])</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span> <span class="o">=</span> <span class="n">interface_helper</span>
+<div class="viewcode-block" id="WaitInLocation.execute"><a class="viewcode-back" href="../index.html#state_machine.WaitInLocation.execute">[docs]</a>	<span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">userdata</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		</span>
+<span class="sd">		Executes the waiting in the location for the amount of time specified in the parameter server. Also, checks the battery level in the meantime to ensure the transition to the charging routine if it got low.</span>
+<span class="sd">		</span>
+<span class="sd">		Arguments</span>
+<span class="sd">		----------</span>
+<span class="sd">		userdata : dictionary</span>
+<span class="sd">			dictionary of keys for trasmitting the data between the states.</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		str</span>
+<span class="sd">			Possible outputs.</span>
+<span class="sd">			</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="c1"># Logging</span>
+		<span class="n">rospy</span><span class="o">.</span><span class="n">loginfo</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">tag_log</span><span class="p">(</span><span class="s2">&quot;Waiting in the location&quot;</span><span class="p">,</span> <span class="n">LOG_TAG</span> <span class="o">+</span> <span class="s2">&quot; &gt;&gt;&gt; &quot;</span> <span class="o">+</span> <span class="n">STATE_WAIT_IN_LOCATION</span><span class="p">))</span>
+		<span class="c1"># Simulate non-blocking wait</span>
+		<span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+		<span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">waiting_time</span><span class="p">:</span> <span class="c1"># Amount of time is specified as a parameter</span>
+			<span class="n">rospy</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.05</span><span class="p">)</span> <span class="c1"># 20 Hz, fast enough to check the battery meanwhile</span>
+			<span class="c1"># Acquire the mutex to ensure data consistency</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span> 
+			<span class="k">try</span><span class="p">:</span>
+				<span class="c1"># If the battery is low, then transit to recharging routine</span>
+				<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">is_battery_low</span><span class="p">():</span>  <span class="c1"># Higher priority</span>
+					<span class="n">userdata</span><span class="o">.</span><span class="n">t0</span> <span class="o">=</span> <span class="n">rospy</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">to_sec</span><span class="p">()</span>
+					<span class="k">return</span> <span class="n">TRANS_RECHARGING</span>
+			<span class="k">finally</span><span class="p">:</span>
+				<span class="c1"># Release the mutex</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+			<span class="n">i</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="mf">0.05</span>
+		<span class="n">rospy</span><span class="o">.</span><span class="n">loginfo</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">tag_log</span><span class="p">(</span><span class="s2">&quot;Done waiting&quot;</span><span class="p">,</span> <span class="n">LOG_TAG</span> <span class="o">+</span> <span class="s2">&quot; &gt;&gt;&gt; &quot;</span> <span class="o">+</span> <span class="n">STATE_WAIT_IN_LOCATION</span><span class="p">))</span>
+		<span class="k">return</span> <span class="n">TRANS_DONE_WAITING</span></div></div>
+
+<div class="viewcode-block" id="main"><a class="viewcode-back" href="../index.html#state_machine.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+	<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">	</span>
+<span class="sd">	Main function. This function initializes the ROS node, State Machine and helper classes. Also, it sets the initial position of the robot. In addition, constructs the state machine with correct transitions.</span>
+
+<span class="sd">	Returns</span>
+<span class="sd">	-------</span>
+<span class="sd">	None.</span>
+
+<span class="sd">	&#39;&#39;&#39;</span>
+	<span class="n">rospy</span><span class="o">.</span><span class="n">init_node</span><span class="p">(</span><span class="s2">&quot;state_machine&quot;</span><span class="p">,</span> <span class="n">log_level</span><span class="o">=</span><span class="n">rospy</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+	<span class="n">sm_main</span> <span class="o">=</span> <span class="n">StateMachine</span><span class="p">(</span><span class="n">outcomes</span><span class="o">=</span><span class="p">[])</span>
+	<span class="n">protegeHelper</span> <span class="o">=</span> <span class="n">ProtegeHelper</span><span class="p">()</span>
+	<span class="n">interfaceHelper</span> <span class="o">=</span> <span class="n">InterfaceHelper</span><span class="p">()</span>
+	<span class="n">robot_pose_param</span> <span class="o">=</span> <span class="n">rospy</span><span class="o">.</span><span class="n">get_param</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">PARAM_INITIAL_POSE</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+	
+	<span class="n">interfaceHelper</span><span class="o">.</span><span class="n">init_robot_pose</span><span class="p">(</span><span class="n">Point</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">robot_pose_param</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">y</span><span class="o">=</span><span class="n">robot_pose_param</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+
+	<span class="k">with</span> <span class="n">sm_main</span><span class="p">:</span>
+		<span class="n">StateMachine</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">STATE_BUILD_MAP</span><span class="p">,</span> <span class="n">BuildMap</span><span class="p">(</span><span class="n">protegeHelper</span><span class="p">),</span> <span class="n">transitions</span><span class="o">=</span><span class="p">{</span><span class="n">TRANS_MAP_NOT_BUILT</span><span class="p">:</span> <span class="n">STATE_BUILD_MAP</span><span class="p">,</span> <span class="n">TRANS_MAP_BUILT</span><span class="p">:</span> <span class="n">STATE_START_EXPLORING</span><span class="p">})</span>
+		<span class="n">sm_behavior</span> <span class="o">=</span> <span class="n">StateMachine</span><span class="p">(</span><span class="n">outcomes</span><span class="o">=</span><span class="p">[</span><span class="n">TRANS_REPEAT</span><span class="p">,</span> <span class="n">TRANS_RECHARGING</span><span class="p">])</span>
+		<span class="k">with</span> <span class="n">sm_behavior</span><span class="p">:</span>
+			<span class="n">StateMachine</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">STATE_START_BEHAVIOR</span><span class="p">,</span> <span class="n">StartBehavior</span><span class="p">(</span><span class="n">protegeHelper</span><span class="p">,</span> <span class="n">interfaceHelper</span><span class="p">),</span> <span class="n">transitions</span><span class="o">=</span><span class="p">{</span><span class="n">TRANS_PLAN_TO_LOCATION</span><span class="p">:</span> <span class="n">STATE_PLAN_TO_LOCATION</span><span class="p">,</span> <span class="n">TRANS_REPEAT</span><span class="p">:</span> <span class="n">TRANS_REPEAT</span><span class="p">})</span>
+			
+			<span class="n">StateMachine</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">STATE_PLAN_TO_LOCATION</span><span class="p">,</span> <span class="n">PlanToLocation</span><span class="p">(</span><span class="n">interfaceHelper</span><span class="p">),</span> <span class="n">transitions</span><span class="o">=</span> <span class="p">{</span><span class="n">TRANS_RECHARGING</span><span class="p">:</span> <span class="n">TRANS_RECHARGING</span><span class="p">,</span> <span class="n">TRANS_PLANNED_TO_LOCATION</span><span class="p">:</span> <span class="n">STATE_GO_TO_LOCATION</span><span class="p">})</span>
+			
+			<span class="n">StateMachine</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">STATE_GO_TO_LOCATION</span><span class="p">,</span> <span class="n">GoToLocation</span><span class="p">(</span><span class="n">protegeHelper</span><span class="p">,</span> <span class="n">interfaceHelper</span><span class="p">),</span> <span class="n">transitions</span> <span class="o">=</span> <span class="p">{</span><span class="n">TRANS_RECHARGING</span><span class="p">:</span> <span class="n">TRANS_RECHARGING</span><span class="p">,</span> <span class="n">TRANS_WENT_TO_LOCATION</span><span class="p">:</span> <span class="n">STATE_WAIT_IN_LOCATION</span><span class="p">})</span>
+			
+			<span class="n">StateMachine</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">STATE_WAIT_IN_LOCATION</span><span class="p">,</span> <span class="n">WaitInLocation</span><span class="p">(</span><span class="n">interfaceHelper</span><span class="p">),</span> <span class="n">transitions</span> <span class="o">=</span> <span class="p">{</span><span class="n">TRANS_DONE_WAITING</span><span class="p">:</span> <span class="n">TRANS_REPEAT</span><span class="p">,</span> <span class="n">TRANS_RECHARGING</span><span class="p">:</span> <span class="n">TRANS_RECHARGING</span><span class="p">})</span>
+			
+			
+			
+		<span class="n">StateMachine</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">STATE_START_EXPLORING</span><span class="p">,</span> <span class="n">sm_behavior</span><span class="p">,</span> <span class="n">transitions</span><span class="o">=</span><span class="p">{</span><span class="n">TRANS_REPEAT</span><span class="p">:</span> <span class="n">STATE_START_EXPLORING</span><span class="p">,</span> <span class="n">TRANS_RECHARGING</span><span class="p">:</span> <span class="n">STATE_RECHARGING_ROUTINE</span><span class="p">})</span>
+		
+		<span class="n">sm_recharge</span> <span class="o">=</span> <span class="n">StateMachine</span><span class="p">(</span><span class="n">outcomes</span> <span class="o">=</span> <span class="p">[</span><span class="n">TRANS_BATTERY_FULL</span><span class="p">])</span>
+		<span class="k">with</span> <span class="n">sm_recharge</span><span class="p">:</span>
+			<span class="n">StateMachine</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">STATE_PLAN_TO_CHARGING_LOCATION</span><span class="p">,</span> <span class="n">PlanToChargingStation</span><span class="p">(</span><span class="n">interfaceHelper</span><span class="p">,</span> <span class="n">protegeHelper</span><span class="p">),</span> <span class="n">transitions</span><span class="o">=</span><span class="p">{</span><span class="n">TRANS_BATTERY_FULL</span><span class="p">:</span> <span class="n">TRANS_BATTERY_FULL</span><span class="p">,</span> <span class="n">TRANS_IN_CHARGING_LOCATION</span><span class="p">:</span> <span class="n">STATE_RECHARGE</span><span class="p">,</span> <span class="n">TRANS_GO_TO_LOCATION</span><span class="p">:</span> <span class="n">STATE_GO_TO_CHARGING_LOCATION</span><span class="p">})</span>
+			
+			<span class="n">StateMachine</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">STATE_GO_TO_CHARGING_LOCATION</span><span class="p">,</span> <span class="n">GoToChargingStation</span><span class="p">(</span><span class="n">interfaceHelper</span><span class="p">,</span> <span class="n">protegeHelper</span><span class="p">),</span> <span class="n">transitions</span><span class="o">=</span><span class="p">{</span><span class="n">TRANS_BATTERY_FULL</span><span class="p">:</span> <span class="n">TRANS_BATTERY_FULL</span><span class="p">,</span> <span class="n">TRANS_IN_CHARGING_LOCATION</span><span class="p">:</span> <span class="n">STATE_RECHARGE</span><span class="p">,</span> <span class="n">TRANS_NOT_IN_CHARGING_LOCATION</span><span class="p">:</span> <span class="n">STATE_PLAN_TO_CHARGING_LOCATION</span><span class="p">})</span>
+			
+			<span class="n">StateMachine</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">STATE_RECHARGE</span><span class="p">,</span> <span class="n">Recharge</span><span class="p">(</span><span class="n">interfaceHelper</span><span class="p">),</span> <span class="n">transitions</span><span class="o">=</span><span class="p">{</span><span class="n">TRANS_BATTERY_FULL</span><span class="p">:</span> <span class="n">TRANS_BATTERY_FULL</span><span class="p">,</span> <span class="n">TRANS_BATTERY_LOW</span><span class="p">:</span> <span class="n">STATE_RECHARGE</span><span class="p">})</span>
+		
+		<span class="n">StateMachine</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">STATE_RECHARGING_ROUTINE</span><span class="p">,</span> <span class="n">sm_recharge</span><span class="p">,</span> <span class="n">transitions</span><span class="o">=</span><span class="p">{</span><span class="n">TRANS_BATTERY_FULL</span><span class="p">:</span> <span class="n">STATE_START_EXPLORING</span><span class="p">})</span>
+		
+	<span class="c1"># Create and start the introspection server for visualizing the finite state machine.</span>
+	<span class="n">sis</span> <span class="o">=</span> <span class="n">smach_ros</span><span class="o">.</span><span class="n">IntrospectionServer</span><span class="p">(</span><span class="s1">&#39;sm_introspection&#39;</span><span class="p">,</span> <span class="n">sm_main</span><span class="p">,</span> <span class="s1">&#39;/SM_ROOT&#39;</span><span class="p">)</span>
+	<span class="n">sis</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+	<span class="c1"># Execute the state machine. Note that the `outcome` value of the main Finite State Machine is not used.</span>
+	<span class="n">outcome</span> <span class="o">=</span> <span class="n">sm_main</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+	<span class="c1"># Wait for ctrl-c to stop the application</span>
+	<span class="n">rospy</span><span class="o">.</span><span class="n">spin</span><span class="p">()</span>
+	<span class="n">sis</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span></div>
+	
+<span class="c1"># The function that get executed at start time.</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>  <span class="c1"># Initialise and start the ROS node.</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Ayan Mazhitov.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
