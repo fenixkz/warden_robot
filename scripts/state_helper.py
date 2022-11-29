@@ -270,7 +270,7 @@ class InterfaceHelper:
         self._charging_location = rospy.get_param(anm.PARAM_CHARGING_STATION, 'E')
         self.randomness = rospy.get_param(anm.PARAM_RANDOM_ACTIVE,  False)
         # Define the dictionary with attached coordinates to each of the location in the topological map
-        self._coord_location_dict = {'E': [10.0, 1.0], 'C1': [8.0, 8.0], 'C2': [12.0, 8.0], 'R1': [4.0, 4.0], 'R2': [4.0, 12.0], 'R3': [2.0, 2.0], 'R4': [2.0, 7.0]}
+        self._coord_location_dict = {'E': [10.0, 2.0], 'C1': [8.0, 10.0], 'C2': [12.0, 10.0], 'R1': [5.0, 5.0], 'R2': [5.0, 15.0], 'R3': [15.0, 5.0], 'R4': [15.0, 15.0]}
         # Set the initial state involving the `self._battery_low`, `self._start_interaction` and `self._gesture` variables.
         self.reset_battery()
         rospy.Subscriber(anm.TOPIC_BATTERY_LOW, Bool, self._battery_callback)
