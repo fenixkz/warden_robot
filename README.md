@@ -23,7 +23,8 @@ The environment consists of locations and doors, specifically:
  - A corridor is a location with more than two doors
  - If two locations share the same door, the robot can move between these locations
 
-The skeleton of the environment has been created by __Luca Buoncomapgni__ [here](https://github.com/buoncubi/topological_map), which can be found in the __topological_map__ folder. 
+The skeleton of the environment has been created by __Luca Buoncomapgni__ [here](https://github.com/buoncubi/topological_map), which can be found in the _topological_map_ folder. 
 
+## State Diagram
 
 
