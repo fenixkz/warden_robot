@@ -43,7 +43,7 @@ The diagram of the states is shown below. Each of the phase is indicated in the 
 
 ## States and transitions
 ### Phase 1
-The program starts with the Phase 1. This phase includes only one state: **BUILD_MAP** which has only two possible output: **MAP_HAS_BUILT** and **MAP_HAS_NOT_BUILT**. The latter output transits to itself, while the former one transits to the **START_EXPLORING** state.
+The program starts with the Phase 1. This phase includes only one state: **`BUILD_MAP`** which has only two possible output: **`MAP_HAS_BUILT`** and **`MAP_HAS_NOT_BUILT`**. The latter output transits to itself, while the former one transits to the **`START_EXPLORING`** state.
 
 ### Phase 2
 Phase 2 has some hierarchical states. There are two higher level states: **START_EXPLORING** and **START_CHARGING_ROUTINE**. 
