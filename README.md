@@ -11,7 +11,7 @@ Documentation for the project cana be found [here](https://fenixkz.github.io/war
 The robot is used to inspect different locations in the indoor environment. The robot’s objective is to visit different locations and stay there for some times.
 
 The surveillance pollicy is as folows:
- - When the robot's battery is not low, it should move to different locations 
+ - When the robot's battery is not low, it should move to different locations and stay there for amount of time specified beforehand
  - The robot should stay mainly in the corridors
  - If a reachable room has not been visited for some times it should visit it.
  - If the robot's battery got low, it should go to the location containing the charging station and recharge the battery.
@@ -49,6 +49,13 @@ The program starts with the Phase 1. This phase includes only one state: **`BUIL
 Phase 2 has some hierarchical states. There are two higher level states: **`START_EXPLORING`** and **`START_CHARGING_ROUTINE`**. 
 
 #### Start Exploring State
-This high level state incorporates four lower-level states and has two outputs. The possible outputs are: `REPEAT` and `RECHARGING_THE_BATTERY`. The first one transits the state to itself to do the inspection in a infinite loop, and the second one refers to the transition when the battery got low and transits the state machine to **`START_CHARING_ROUTINE`** state.  
+This high level state incorporates four lower-level states and has two outputs. The possible outputs are: `REPEAT` and `RECHARGING_THE_BATTERY`. The first one transits the state to itself to do the inspection in a infinite loop, and the second one refers to the transition when the battery got low and transits the state machine to **`START_CHARGING_ROUTINE`** state.  
 Four inner states are: **`START_BEHAVIOR`**, **`PLAN_TO_GIVEN_LOCATION`**, **`GO_TO_GIVEN_LOCATION`**, and **`WAIT_IN_LOCATION`**.   
-**`START_BEHAVIOR`** is the initial state of the outer state, in this state the program decides the next location, where the robot should go and transits to **`PLAN_TO_GIVEN_LOCATION`**. In that state, the algorithm calls the Planner Action server to compute the plan to the desired location. After the planner is done, it transits to **`GO_TO_GIVEN_LOCATION`**
+**`START_BEHAVIOR`** is the initial state of the outer state, in this state the program decides the next location, where the robot should go and transits to **`PLAN_TO_GIVEN_LOCATION`**. In that state, the algorithm calls the Planner Action server to compute the plan to the desired location. After the planner is done, it transits to **`GO_TO_GIVEN_LOCATION`**, where the algorithm calls the Controller Action server to follow the computed plan and moves the robot to the new location.  
+When the robot has successfully moved to a new location, the state machine goes to the final state **`WAIT_IN_LOCATION`**, where the robot waits for the specified amount of time.  
+Every of that states has `RECHARGING_THE_BATTERY` transitions. That transitions is executed when the robot's battery got low while executing the state routine.
+
+#### Start Charging Routine State
+This high level state has three inner states and one possible output - `BATTERY_IS_FULL`, which tramsits the state machine to **`START_EXPLORING`** state.  
+The initial state is **`PLAN_TO_CHARGING_LOCATION`**, where the algorithm check whether the robot is in location containing the charging station. If yes, then it transits to **`RECHARGE`** state, where the algorithm simulates the recharging process of the battery. If no, then it finds the location closest to the charging station and computes plan to it. After that, it transits to **`GO_TO_CHARGING_LOCATION`** state, where the Controller Action server follows the computed plan and checks again whether the robot is within the charging location. If yes, then it transits to **`RECHARGE`** and if no, then the routine repeats.  
+Finally, **`RECHARGE`** state check if the battery got full. If the battery is full, then it transits to `BATTERY_FULL`, if not it transits to itself.
