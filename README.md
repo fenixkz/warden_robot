@@ -15,7 +15,25 @@ The surveillance pollicy is as folows:
  - The robot should stay mainly in the corridors
  - If a reachable room has not been visited for some times it should visit it.
  - If the robot's battery got low, it should go to the location containing the charging station and recharge the battery.
-
+## Installation and launching
+### Requirements
+The machine has to have ROS Noetic with python > 3.0. Also, the following libraries have to be installed beforehand
+ - [rospy](http://wiki.ros.org/rospy)
+ - [actionlib](http://wiki.ros.org/actionlib)
+ - [ARMOR](https://github.com/EmaroLab/armor)
+ - [armor_py_api](https://github.com/EmaroLab/armor_py_api)
+ - xterm `sudo apt install -y xterm`
+ - [smach](http://wiki.ros.org/smach)
+ 
+### Installation 
+ - Clone the current repository to your ROS workspace 
+ - Change directory to _scripts_ and run `chmod +x *.py` where * is the name of each python script
+ - Finally, build your workspace
+### Launching
+To launch the solution, please source your workspace and run the following command:  
+`roslaunch warden_robot main.launch random:=false view_smach_gui:=false`  
+Two arguments are given to the launch file, first `random` refers to either random sense or manual sense of controlling the battery of the robot.  
+`view_smach_gui` arguments responsible for visualizing the state machine
 ## Environment
 The robot is simulated in the indoor environment which is shown in the figure below 
 ![env](https://github.com/fenixkz/warden_robot/blob/main/figures/exprorob.png)
