@@ -112,6 +112,8 @@ The _scripts/_ folder contains the information on each software component that w
 ### State_machine
 This is the main python module that creates the SMACH like State Machine and does the solution to the assignment. Again, please refer to the documentation for more detailed explanation.
 
+## Video example
+You can watch a short video showing how the system works: https://clipchamp.com/watch/rUNZdoUDs2y
 ## Problems and further improvements
 The solution works very well for the provided as default parameters. However, some problems may occur when you change the location where the charging station is located. With this connection further improvements are:
  - Improve the `state_helper.ProtegeHelper.plan_to_recharge_station` method to work for other charging locations
