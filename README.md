@@ -111,3 +111,4 @@ The solution works very well for the provided as default parameters. However, so
  - Improve the `state_helper.ProtegeHelper.plan_to_recharge_station` method to work for other charging locations
  - Use the previously computed plans to move between the same locations insted of computing the new one for better performance
  - Implement the possibility of adding and controlling more than one robot
+ - Implement the behavior when either **Planner**, **Controller** or **armor_py_api** fails
