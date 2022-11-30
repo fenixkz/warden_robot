@@ -5,7 +5,7 @@ This repository simulates the robot in a indoor environment for surveillance pur
 
 The repository was implemented on Docker container with Ubuntu 20.04 with ROS Kinetic and Python 3.8.  
 ## Documentation
-Documentation for the project cana be found [here](https://fenixkz.github.io/warden_robot/)
+Documentation for the project can be found [here](https://fenixkz.github.io/warden_robot/)
 
 ## Scenario
 The robot is used to inspect different locations in the indoor environment. The robot’s objective is to visit different locations and stay there for some times.
@@ -29,11 +29,28 @@ The machine has to have ROS Noetic with python > 3.0. Also, the following librar
  - Clone the current repository to your ROS workspace 
  - Change directory to _scripts_ and run `chmod +x *.py` where * is the name of each python script
  - Finally, build your workspace
+
 ### Launching
+Before launching the solution, please open the `warden_robot/launch/main.launch` file and change the path to the ontology file in `config/ontology_path` parameter.  
 To launch the solution, please source your workspace and run the following command:  
 `roslaunch warden_robot main.launch random:=false view_smach_gui:=false`  
-Two arguments are given to the launch file, first `random` refers to either random sense or manual sense of controlling the battery of the robot.  
+Two arguments are given to the launch file.  
+`random` refers to either random sense or manual sense of controlling the battery of the robot.  
 `view_smach_gui` arguments responsible for visualizing the state machine
+### Parameters
+In the `main.launch` file you can find the parameters used for the state machine implementation:
+ - `test/random_sense/active` takes the argument `random` and decides whether the state machine is going to use random or manual sense
+ - `test/random_plan_points` is the list of two integer numbers representing the amount of via points given by the **Planner** action server
+ - `test/random_plan_time` is the list of two float numbers representing a delay to simulate computation of via points
+ - `test/random_motion_time` is the list of two float numbers representing a delay to simulate the time spent moving the robot to that location
+ - `state/initial_pose` is the list of two float numbers representing the initial position of the robot in the environment
+ - `config/waiting_time` is the float number representing the waiting time of the robot in a location for surveillance purposes
+ - `config/charge_time` is the float number representing the waiting time to simulate a process of recharging the battery of the robot
+ - `config/environment_size` is the list of two float numbers representing the size of the environment
+ - `config/charging_station` is a string representing the location where the charging station is located
+ - `config/ontology_name` is a string representing the name of the ontology
+ - `config/ontology_path` is a string representing the absolute path to the ontology file
+ - `test/random_sense/battery_time` is a list of two float numbers for choosing randomly the amount of time to wait to change the state of the battery. Only needed when the random sense is active. 
 ## Environment
 The robot is simulated in the indoor environment which is shown in the figure below 
 ![env](https://github.com/fenixkz/warden_robot/blob/main/figures/exprorob.png)
@@ -77,3 +94,10 @@ Every of that states has `RECHARGING_THE_BATTERY` transitions. That transitions 
 This high level state has three inner states and one possible output - `BATTERY_IS_FULL`, which tramsits the state machine to **`START_EXPLORING`** state.  
 The initial state is **`PLAN_TO_CHARGING_LOCATION`**, where the algorithm check whether the robot is in location containing the charging station. If yes, then it transits to **`RECHARGE`** state, where the algorithm simulates the recharging process of the battery. If no, then it finds the location closest to the charging station and computes plan to it. After that, it transits to **`GO_TO_CHARGING_LOCATION`** state, where the Controller Action server follows the computed plan and checks again whether the robot is within the charging location. If yes, then it transits to **`RECHARGE`** and if no, then the routine repeats.  
 Finally, **`RECHARGE`** state check if the battery got full. If the battery is full, then it transits to `BATTERY_FULL`, if not it transits to itself.
+
+## Software architecture
+The _scripts/_ folder contains the information on each software component that was used to create this repository.  
+**Planner.py** and **Controller.py** were given to us and more in-depth explanation of these software can be found [here](https://github.com/buoncubi/arch_skeleton)
+### State_helper
+**state_helper.py** implements helper classes to deal with `armor_py_api` and overall logic of the surveillance policy. It incorporates three classes: _ProtegeHelper()_, _ActionClientHelper()_, and _InterfaceHelper()_. The documentation provides explanation of their logic.
+### State_machine
