@@ -6,6 +6,7 @@
 .. moduleauthor:: Ayan Mazhitov mazhitovayan@gmail.com
 
 Python module that defines three clases of helpers to be used in :mod:`state_machine`: ProtegeHelper(), InterfaceHelper(), ActionClientHelper()
+
 """
 
 
@@ -37,7 +38,7 @@ class ProtegeHelper():
 	
 	Attributes
 	----------
-	client: `armor_api.armor_client.ArmorClient`
+	client: :mod:`armor_api.armor_client.ArmorClient`
 		An Armor client from `armor_py_api <https://github.com/EmaroLab/armor_py_api>`_ library to do queries and manipulation with the ontology file
 	
 	Methods
@@ -374,7 +375,7 @@ class ProtegeHelper():
 class ActionClientHelper:
     '''
     
-    Acton Client Helper for ROS actionlib. Implemented by the professor as an example. Taken from the exercise solution
+    Acton Client Helper for ROS `actionlib`. Implemented by the professor as an example. Taken from the exercise solution
     
     Parameters
     ----------
@@ -394,7 +395,7 @@ class ActionClientHelper:
     send_goal(goal)
          Class method that sends the goal to the action server
     cancel_goals()
-         Class method that cancel all the current goals
+         Class method that cancels all the current goals
     reset_client_states()
          Class method that resets all the internal states of the action server
     is_done()
@@ -522,7 +523,7 @@ class ActionClientHelper:
 class InterfaceHelper:
     '''
     
-    A helper class to implement the logic of the surveillance policy.
+    A helper class to make the interface easier. Responsible for quering Planner and Controller Action Client. Also, has method that checks the battery level through :mod:`robot_states` service: /state/battery_low. 
     
     Attributes
     ----------
@@ -534,9 +535,9 @@ class InterfaceHelper:
         Time that robot waits in location for surveillance purposes. Retrieve from ROS param server by key `config/waiting_time`
     randomness: bool
         Indicates whether the battery is controlled manually or by random sense. Retrieved from ROS param server by key `test/random_sense_active`
-    planner_client: `state_helper.ActionClientHelper`
-        An action server for planning routine
-    controller_client: `state_helper.ActionClientHelper`
+    planner_client: :mod:`state_helper.ActionClientHelper`
+        An action server for planning the trajectory to a point in a environment. 
+    controller_client: :mod:`state_helper.ActionClientHelper`
         An action server for controlling the robot
     LOG_TAG: str
         Tag used for logging purposes

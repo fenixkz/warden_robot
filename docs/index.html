@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Welcome to Warden_robot’s documentation! &mdash; Warden_robot 1.0 documentation</title>
+  <title>Welcome to warden_robot’s documentation! &mdash; warden_robot 1.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
@@ -27,7 +27,7 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="#" class="icon icon-home"> Warden_robot
+            <a href="#" class="icon icon-home"> warden_robot
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -39,12 +39,12 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <!-- Local TOC -->
               <div class="local-toc"><ul>
-<li><a class="reference internal" href="#">Welcome to Warden_robot’s documentation!</a></li>
+<li><a class="reference internal" href="#">Welcome to warden_robot’s documentation!</a></li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a><ul>
 <li><a class="reference internal" href="#warden-robot-s-documentation">Warden_robot’s documentation!</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#module-0">State Machine module</a><ul>
+<li><a class="reference internal" href="#module-0">State Machine Python Module</a><ul>
 <li><a class="reference internal" href="#state_machine.BuildMap"><code class="docutils literal notranslate"><span class="pre">BuildMap</span></code></a><ul>
 <li><a class="reference internal" href="#state_machine.BuildMap.protege_helper"><code class="docutils literal notranslate"><span class="pre">BuildMap.protege_helper</span></code></a></li>
 <li><a class="reference internal" href="#state_machine.BuildMap.execute"><code class="docutils literal notranslate"><span class="pre">BuildMap.execute()</span></code></a></li>
@@ -103,7 +103,7 @@
 <li><a class="reference internal" href="#state_machine.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#module-1">State Helper module</a><ul>
+<li><a class="reference internal" href="#module-1">State Helper Python Module</a><ul>
 <li><a class="reference internal" href="#state_helper.ActionClientHelper"><code class="docutils literal notranslate"><span class="pre">ActionClientHelper</span></code></a><ul>
 <li><a class="reference internal" href="#state_helper.ActionClientHelper.send_goal"><code class="docutils literal notranslate"><span class="pre">ActionClientHelper.send_goal()</span></code></a></li>
 <li><a class="reference internal" href="#state_helper.ActionClientHelper.cancel_goals"><code class="docutils literal notranslate"><span class="pre">ActionClientHelper.cancel_goals()</span></code></a></li>
@@ -172,7 +172,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="#">Warden_robot</a>
+          <a href="#">warden_robot</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -180,7 +180,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="#" class="icon icon-home"></a></li>
-      <li class="breadcrumb-item active">Welcome to Warden_robot’s documentation!</li>
+      <li class="breadcrumb-item active">Welcome to warden_robot’s documentation!</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -191,7 +191,7 @@
            <div itemprop="articleBody">
              
   <div class="section" id="welcome-to-warden-robot-s-documentation">
-<h1>Welcome to Warden_robot’s documentation!<a class="headerlink" href="#welcome-to-warden-robot-s-documentation" title="Permalink to this heading"></a></h1>
+<h1>Welcome to warden_robot’s documentation!<a class="headerlink" href="#welcome-to-warden-robot-s-documentation" title="Permalink to this heading"></a></h1>
 <div class="toctree-wrapper compound">
 </div>
 </div>
@@ -208,14 +208,15 @@
 </div>
 </div>
 <div class="section" id="module-0">
-<span id="state-machine-module"></span><h1>State Machine module<a class="headerlink" href="#module-0" title="Permalink to this heading"></a></h1>
+<span id="state-machine-python-module"></span><h1>State Machine Python Module<a class="headerlink" href="#module-0" title="Permalink to this heading"></a></h1>
 <span class="target" id="module-state_machine"></span><p>This script is the main script that creates the state machine based on <a class="reference external" href="http://wiki.ros.org/smach">SMACH</a> ROS library.
 The necessary connections to ontology via <a class="reference external" href="https://github.com/EmaroLab/armor_py_api">armor_py_api</a> is done via the helper class <a class="reference internal" href="#state_helper.ProtegeHelper" title="state_helper.ProtegeHelper"><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.ProtegeHelper</span></code></a>
-Interface helper (<code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.interface_helper</span></code>) is used to do the logic described by the surveillance policy</p>
+Interface helper (<a class="reference internal" href="#state_helper.InterfaceHelper" title="state_helper.InterfaceHelper"><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.InterfaceHelper</span></code></a>) is used to do the logic described by the surveillance policy</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="state_machine.BuildMap">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">state_machine.</span></span><span class="sig-name descname"><span class="pre">BuildMap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protegeHelper</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/state_machine.html#BuildMap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#state_machine.BuildMap" title="Permalink to this definition"></a></dt>
-<dd><p>This class represents the implementation of the STATE_BUILD_MAP state.</p>
+<dd><p>This class represents the implementation of the <strong>BUILD_MAP</strong> state. In this state, the robot calls <a class="reference internal" href="#id21" title="state_helper.ProtegeHelper.build_map"><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.ProtegeHelper.build_map</span></code></a> function to build the
+topological map of the environment, and then calls <a class="reference internal" href="#id30" title="state_helper.ProtegeHelper.move_robot"><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.ProtegeHelper.move_robot</span></code></a> to move the robot to the starting location ‘E’.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="state_machine.BuildMap.protege_helper">
 <span class="sig-name descname"><span class="pre">protege_helper</span></span><a class="headerlink" href="#state_machine.BuildMap.protege_helper" title="Permalink to this definition"></a></dt>
@@ -270,7 +271,10 @@ Interface helper (<code class="xref py py-mod docutils literal notranslate"><spa
 <dl class="py class">
 <dt class="sig sig-object py" id="state_machine.GoToChargingStation">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">state_machine.</span></span><span class="sig-name descname"><span class="pre">GoToChargingStation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">interface_helper</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protege_helper</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/state_machine.html#GoToChargingStation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#state_machine.GoToChargingStation" title="Permalink to this definition"></a></dt>
-<dd><p>This class represents the implementation of the STATE_GO_TO_CHARGING_STATION state.</p>
+<dd><p>This class represents the implementation of the <strong>GO_TO_CHARGING_STATION</strong> state. When the previous state <strong>PLAN_TO_CHARGING_STATION</strong> completes, it receives the desired trajectory
+and calls <a class="reference internal" href="#state_helper.InterfaceHelper.controller_client" title="state_helper.InterfaceHelper.controller_client"><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.InterfaceHelper.controller_client</span></code></a> to follow the via points. When the client finishes, it also calls <a class="reference internal" href="#id30" title="state_helper.ProtegeHelper.move_robot"><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.ProtegeHelper.move_robot</span></code></a> to move the robot
+in the ontology. After that, it checks whether the new location of the robot is the same as the charging one. If yes, then transits to <strong>RECHARGE</strong>. And in other case, returns to
+the previous state <strong>PLAN_TO_CHARGING_STATION</strong></p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="state_machine.GoToChargingStation.protege_helper">
 <span class="sig-name descname"><span class="pre">protege_helper</span></span><a class="headerlink" href="#state_machine.GoToChargingStation.protege_helper" title="Permalink to this definition"></a></dt>
@@ -288,7 +292,7 @@ Interface helper (<code class="xref py py-mod docutils literal notranslate"><spa
 <dd><p>Class attribute to deal with the interface logic</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.interface_helper</span></code></p>
+<dd class="field-odd"><p><a class="reference internal" href="#state_helper.InterfaceHelper" title="state_helper.InterfaceHelper"><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.InterfaceHelper</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -345,7 +349,9 @@ Interface helper (<code class="xref py py-mod docutils literal notranslate"><spa
 <dl class="py class">
 <dt class="sig sig-object py" id="state_machine.GoToLocation">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">state_machine.</span></span><span class="sig-name descname"><span class="pre">GoToLocation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protege_helper</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interface_helper</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/state_machine.html#GoToLocation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#state_machine.GoToLocation" title="Permalink to this definition"></a></dt>
-<dd><p>This class represents the implementation of the STATE_GO_TO_LOCATION state.</p>
+<dd><p>This class represents the implementation of the <strong>GO_TO_GIVEN_LOCATION</strong> state. When the previous state (<strong>PLAN_TO_GIVEN_LOCATION</strong>) terminates, it transfers the computed trajectory
+to this state as an input key. Then, the state calls the Controller Action Server (<a class="reference internal" href="#state_helper.InterfaceHelper.controller_client" title="state_helper.InterfaceHelper.controller_client"><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.InterfaceHelper.controller_client</span></code></a>) to follow the desired trajectory.
+It also checks every period specified by <em>LOOP_RATE_SLEEP</em> the current state of the battery, if it got low, it terminates and transits to <strong>START_CHARGING_ROTUINE</strong> state.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="state_machine.GoToLocation.protege_helper">
 <span class="sig-name descname"><span class="pre">protege_helper</span></span><a class="headerlink" href="#state_machine.GoToLocation.protege_helper" title="Permalink to this definition"></a></dt>
@@ -363,7 +369,7 @@ Interface helper (<code class="xref py py-mod docutils literal notranslate"><spa
 <dd><p>Class attribute to deal with the interface logic</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.interface_helper</span></code></p>
+<dd class="field-odd"><p><a class="reference internal" href="#state_helper.InterfaceHelper" title="state_helper.InterfaceHelper"><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.InterfaceHelper</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -416,7 +422,11 @@ Interface helper (<code class="xref py py-mod docutils literal notranslate"><spa
 <dl class="py class">
 <dt class="sig sig-object py" id="state_machine.PlanToChargingStation">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">state_machine.</span></span><span class="sig-name descname"><span class="pre">PlanToChargingStation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">interface_helper</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protege_helper</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/state_machine.html#PlanToChargingStation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#state_machine.PlanToChargingStation" title="Permalink to this definition"></a></dt>
-<dd><p>This class represents the implementation of the STATE_PLAN_TO_CHARGING_STATION state.</p>
+<dd><p>This class represents the implementation of the <strong>PLAN_TO_CHARGING_STATION</strong> state. This state becomes active, when the battery of the robot is low.
+It calls <a class="reference internal" href="#id15" title="state_helper.InterfaceHelper.get_charging_location"><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.InterfaceHelper.get_charging_location</span></code></a> to know where is the charging station is located. If it is the same location as the current location of the robot
+Then, it terminates and transits to <strong>RECHARGE</strong>. If not, then via <a class="reference internal" href="#id31" title="state_helper.ProtegeHelper.plan_to_recharge_station"><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.ProtegeHelper.plan_to_recharge_station</span></code></a> method finds the closest location that the robot
+can reach and calls <a class="reference internal" href="#state_helper.InterfaceHelper.planner_client" title="state_helper.InterfaceHelper.planner_client"><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.InterfaceHelper.planner_client</span></code></a> to compute the planning trajectory to that location. After the successfull completion of the action server
+computation, terminates and transits to <strong>GO_TO_CHARGING_STATION</strong>.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="state_machine.PlanToChargingStation.protege_helper">
 <span class="sig-name descname"><span class="pre">protege_helper</span></span><a class="headerlink" href="#state_machine.PlanToChargingStation.protege_helper" title="Permalink to this definition"></a></dt>
@@ -434,7 +444,7 @@ Interface helper (<code class="xref py py-mod docutils literal notranslate"><spa
 <dd><p>Class attribute to deal with the interface logic</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.interface_helper</span></code></p>
+<dd class="field-odd"><p><a class="reference internal" href="#state_helper.InterfaceHelper" title="state_helper.InterfaceHelper"><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.InterfaceHelper</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -490,14 +500,16 @@ Interface helper (<code class="xref py py-mod docutils literal notranslate"><spa
 <dl class="py class">
 <dt class="sig sig-object py" id="state_machine.PlanToLocation">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">state_machine.</span></span><span class="sig-name descname"><span class="pre">PlanToLocation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">interface_helper</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/state_machine.html#PlanToLocation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#state_machine.PlanToLocation" title="Permalink to this definition"></a></dt>
-<dd><p>This class represents the implementation of the STATE_PLAN_TO_LOCATION state.</p>
+<dd><p>This class represents the implementation of the <strong>PLAN_TO_GIVEN_LOCATION</strong> state. When the <strong>START_BEHAVIOR</strong> terminates, it gives the desired location to this state.
+It calls the Planner Action Server (<a class="reference internal" href="#state_helper.InterfaceHelper.planner_client" title="state_helper.InterfaceHelper.planner_client"><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.InterfaceHelper.planner_client</span></code></a> to compute the planning trajectory to that location.
+It also checks every period specified by <cite>LOOP_RATE_SLEEP</cite> the current state of the battery, if it got low, it terminates and transits to <strong>START_CHARGING_ROTUINE</strong> state.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="state_machine.PlanToLocation.interface_helper">
 <span class="sig-name descname"><span class="pre">interface_helper</span></span><a class="headerlink" href="#state_machine.PlanToLocation.interface_helper" title="Permalink to this definition"></a></dt>
 <dd><p>Class attribute to deal with the interface logic</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.interface_helper</span></code></p>
+<dd class="field-odd"><p><a class="reference internal" href="#state_helper.InterfaceHelper" title="state_helper.InterfaceHelper"><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.InterfaceHelper</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -553,7 +565,11 @@ Interface helper (<code class="xref py py-mod docutils literal notranslate"><spa
 <dl class="py class">
 <dt class="sig sig-object py" id="state_machine.Recharge">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">state_machine.</span></span><span class="sig-name descname"><span class="pre">Recharge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">interface_helper</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/state_machine.html#Recharge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#state_machine.Recharge" title="Permalink to this definition"></a></dt>
-<dd><p>This class represents the implementation of the STATE_RECHARGE state.</p>
+<dd><p>This class represents the implementation of the <strong>RECHARGE</strong> state. This is the main recharging state. This state executes the simulation of the process of recharging the battery.
+There are two possible cases of the simulation. First, if the random sense is active, then this state just waits until the battery gets full again. Second, if the manual sense is active, then
+it simulates the charging, by waiting the specified amount of time. Also, in order to better visualize, it prints to the screen the current battery charge. It is calculated by
+calling <code class="xref py py-mod docutils literal notranslate"><span class="pre">rospy.Time.now.to_sec</span></code> and subtracting <em>t0</em> (initial timestamp, when the battery got low, received as an input from whatever state that was active). Then, the obtained number is
+divided by total charging time and multiplied by 100.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="state_machine.Recharge.protege_helper">
 <span class="sig-name descname"><span class="pre">protege_helper</span></span><a class="headerlink" href="#state_machine.Recharge.protege_helper" title="Permalink to this definition"></a></dt>
@@ -571,7 +587,7 @@ Interface helper (<code class="xref py py-mod docutils literal notranslate"><spa
 <dd><p>Class attribute to deal with the interface logic</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.interface_helper</span></code></p>
+<dd class="field-odd"><p><a class="reference internal" href="#state_helper.InterfaceHelper" title="state_helper.InterfaceHelper"><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.InterfaceHelper</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -646,7 +662,9 @@ Also, if the random sense is active, just waits until the battery’s topic rece
 <dl class="py class">
 <dt class="sig sig-object py" id="state_machine.StartBehavior">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">state_machine.</span></span><span class="sig-name descname"><span class="pre">StartBehavior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protegeHelper</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interfaceHelper</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/state_machine.html#StartBehavior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#state_machine.StartBehavior" title="Permalink to this definition"></a></dt>
-<dd><p>This class represents the implementation of the STATE_START_BEHAVIOR state.</p>
+<dd><p>This class represents the implementation of the <strong>START_BEHAVIOR</strong> state. This state is the initial state of <strong>START_EXPLORING</strong> super state. During the activation of
+current state, the robot calls the method <a class="reference internal" href="#id22" title="state_helper.ProtegeHelper.canReach"><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.ProtegeHelper.canReach</span></code></a> to retrieve of all location that it can reach. If the <a class="reference internal" href="#state_helper.ProtegeHelper" title="state_helper.ProtegeHelper"><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.ProtegeHelper</span></code></a> cannot
+get the list of reachable location, raises an error. Else it calls <a class="reference internal" href="#id23" title="state_helper.ProtegeHelper.decide_next_location"><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.ProtegeHelper.decide_next_location</span></code></a> to decide what should be the location that the robot should visit.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="state_machine.StartBehavior.protege_helper">
 <span class="sig-name descname"><span class="pre">protege_helper</span></span><a class="headerlink" href="#state_machine.StartBehavior.protege_helper" title="Permalink to this definition"></a></dt>
@@ -664,7 +682,7 @@ Also, if the random sense is active, just waits until the battery’s topic rece
 <dd><p>Class attribute to deal with the interface logic</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.interface_helper</span></code></p>
+<dd class="field-odd"><p><a class="reference internal" href="#state_helper.InterfaceHelper" title="state_helper.InterfaceHelper"><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.InterfaceHelper</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -715,14 +733,15 @@ Also, if the random sense is active, just waits until the battery’s topic rece
 <dl class="py class">
 <dt class="sig sig-object py" id="state_machine.WaitInLocation">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">state_machine.</span></span><span class="sig-name descname"><span class="pre">WaitInLocation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">interface_helper</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/state_machine.html#WaitInLocation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#state_machine.WaitInLocation" title="Permalink to this definition"></a></dt>
-<dd><p>This class represents the implementation of the STATE_WAIT_IN_LOCATION state.</p>
+<dd><p>This class represents the implementation of the <strong>WAIT_IN_LOCATION</strong> state. In this state, the algorithm just waits for the specified amount of time to simulate the inspection
+of the location, where the robot is located. Also, every <em>LOOP_SLEEP_TIME</em> checks the battery state to transit to <strong>START_CHARGING_ROUTINE</strong> state in case if it is low.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="state_machine.WaitInLocation.interface_helper">
 <span class="sig-name descname"><span class="pre">interface_helper</span></span><a class="headerlink" href="#state_machine.WaitInLocation.interface_helper" title="Permalink to this definition"></a></dt>
 <dd><p>Class attribute to deal with the interface logic</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.interface_helper</span></code></p>
+<dd class="field-odd"><p><a class="reference internal" href="#state_helper.InterfaceHelper" title="state_helper.InterfaceHelper"><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.InterfaceHelper</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -783,12 +802,12 @@ Also, if the random sense is active, just waits until the battery’s topic rece
 
 </div>
 <div class="section" id="module-1">
-<span id="state-helper-module"></span><h1>State Helper module<a class="headerlink" href="#module-1" title="Permalink to this heading"></a></h1>
+<span id="state-helper-python-module"></span><h1>State Helper Python Module<a class="headerlink" href="#module-1" title="Permalink to this heading"></a></h1>
 <span class="target" id="module-state_helper"></span><p>Python module that defines three clases of helpers to be used in <a class="reference internal" href="#module-0" title="state_machine"><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_machine</span></code></a>: ProtegeHelper(), InterfaceHelper(), ActionClientHelper()</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="state_helper.ActionClientHelper">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">state_helper.</span></span><span class="sig-name descname"><span class="pre">ActionClientHelper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">service_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">done_callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feedback_callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/state_helper.html#ActionClientHelper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#state_helper.ActionClientHelper" title="Permalink to this definition"></a></dt>
-<dd><p>Acton Client Helper for ROS actionlib. Implemented by the professor as an example. Taken from the exercise solution</p>
+<dd><p>Acton Client Helper for ROS <cite>actionlib</cite>. Implemented by the professor as an example. Taken from the exercise solution</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -809,7 +828,7 @@ Also, if the random sense is active, just waits until the battery’s topic rece
 <dl class="py method">
 <dt class="sig sig-object py" id="state_helper.ActionClientHelper.cancel_goals">
 <span class="sig-name descname"><span class="pre">cancel_goals</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/state_helper.html#ActionClientHelper.cancel_goals"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#state_helper.ActionClientHelper.cancel_goals" title="Permalink to this definition"></a></dt>
-<dd><p>Class method that cancel all the current goals</p>
+<dd><p>Class method that cancels all the current goals</p>
 </dd></dl>
 
 <dl class="py method">
@@ -841,7 +860,7 @@ Also, if the random sense is active, just waits until the battery’s topic rece
 <dl class="py class">
 <dt class="sig sig-object py" id="state_helper.InterfaceHelper">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">state_helper.</span></span><span class="sig-name descname"><span class="pre">InterfaceHelper</span></span><a class="reference internal" href="_modules/state_helper.html#InterfaceHelper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#state_helper.InterfaceHelper" title="Permalink to this definition"></a></dt>
-<dd><p>A helper class to implement the logic of the surveillance policy.</p>
+<dd><p>A helper class to make the interface easier. Responsible for quering Planner and Controller Action Client. Also, has method that checks the battery level through <code class="xref py py-mod docutils literal notranslate"><span class="pre">robot_states</span></code> service: /state/battery_low.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="state_helper.InterfaceHelper.mutex">
 <span class="sig-name descname"><span class="pre">mutex</span></span><a class="headerlink" href="#state_helper.InterfaceHelper.mutex" title="Permalink to this definition"></a></dt>
@@ -889,10 +908,10 @@ Also, if the random sense is active, just waits until the battery’s topic rece
 <dl class="py attribute">
 <dt class="sig sig-object py" id="state_helper.InterfaceHelper.planner_client">
 <span class="sig-name descname"><span class="pre">planner_client</span></span><a class="headerlink" href="#state_helper.InterfaceHelper.planner_client" title="Permalink to this definition"></a></dt>
-<dd><p>An action server for planning routine</p>
+<dd><p>An action server for planning the trajectory to a point in a environment.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><cite>state_helper.ActionClientHelper</cite></p>
+<dd class="field-odd"><p><a class="reference internal" href="#state_helper.ActionClientHelper" title="state_helper.ActionClientHelper"><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.ActionClientHelper</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -903,7 +922,7 @@ Also, if the random sense is active, just waits until the battery’s topic rece
 <dd><p>An action server for controlling the robot</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><cite>state_helper.ActionClientHelper</cite></p>
+<dd class="field-odd"><p><a class="reference internal" href="#state_helper.ActionClientHelper" title="state_helper.ActionClientHelper"><code class="xref py py-mod docutils literal notranslate"><span class="pre">state_helper.ActionClientHelper</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1018,7 +1037,7 @@ Also, if the random sense is active, just waits until the battery’s topic rece
 <dd><p>An Armor client from <a class="reference external" href="https://github.com/EmaroLab/armor_py_api">armor_py_api</a> library to do queries and manipulation with the ontology file</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><cite>armor_api.armor_client.ArmorClient</cite></p>
+<dd class="field-odd"><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">armor_api.armor_client.ArmorClient</span></code></p>
 </dd>
 </dl>
 </dd></dl>

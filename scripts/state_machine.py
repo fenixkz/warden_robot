@@ -8,7 +8,8 @@
 
 This script is the main script that creates the state machine based on `SMACH <http://wiki.ros.org/smach>`_ ROS library.
 The necessary connections to ontology via `armor_py_api <https://github.com/EmaroLab/armor_py_api>`_ is done via the helper class :mod:`state_helper.ProtegeHelper`
-Interface helper (:mod:`state_helper.interface_helper`) is used to do the logic described by the surveillance policy
+Interface helper (:mod:`state_helper.InterfaceHelper`) is used to do the logic described by the surveillance policy
+
 """
 
 # Import of the necessary libraris
@@ -61,7 +62,8 @@ LOG_TAG = "STATE_MACHINE" # For logging purposes
 class BuildMap(State):
 	'''
 	
-	This class represents the implementation of the STATE_BUILD_MAP state.
+	This class represents the implementation of the **BUILD_MAP** state. In this state, the robot calls :mod:`state_helper.ProtegeHelper.build_map` function to build the 
+	topological map of the environment, and then calls :mod:`state_helper.ProtegeHelper.move_robot` to move the robot to the starting location 'E'.
 	
 	Attributes
 	----------
@@ -131,13 +133,15 @@ class StartBehavior(State):
 
 	'''
 	
-	This class represents the implementation of the STATE_START_BEHAVIOR state.
+	This class represents the implementation of the **START_BEHAVIOR** state. This state is the initial state of **START_EXPLORING** super state. During the activation of 
+	current state, the robot calls the method :mod:`state_helper.ProtegeHelper.canReach` to retrieve of all location that it can reach. If the :mod:`state_helper.ProtegeHelper` cannot
+	get the list of reachable location, raises an error. Else it calls :mod:`state_helper.ProtegeHelper.decide_next_location` to decide what should be the location that the robot should visit.
 	
 	Attributes
 	----------
 	protege_helper: :mod:`state_helper.ProtegeHelper`
 		Class attribute to deal with `armor_py_api <https://github.com/EmaroLab/armor_py_api>`_
-	interface_helper: :mod:`state_helper.interface_helper`
+	interface_helper: :mod:`state_helper.InterfaceHelper`
 		Class attribute to deal with the interface logic
 	
 	Methods
@@ -197,13 +201,17 @@ class PlanToChargingStation(State):
 	
 	'''
 	
-	This class represents the implementation of the STATE_PLAN_TO_CHARGING_STATION state.
+	This class represents the implementation of the **PLAN_TO_CHARGING_STATION** state. This state becomes active, when the battery of the robot is low. 
+	It calls :mod:`state_helper.InterfaceHelper.get_charging_location` to know where is the charging station is located. If it is the same location as the current location of the robot
+	Then, it terminates and transits to **RECHARGE**. If not, then via :mod:`state_helper.ProtegeHelper.plan_to_recharge_station` method finds the closest location that the robot
+	can reach and calls :mod:`state_helper.InterfaceHelper.planner_client` to compute the planning trajectory to that location. After the successfull completion of the action server 
+	computation, terminates and transits to **GO_TO_CHARGING_STATION**.
 	
 	Attributes
 	----------
 	protege_helper: :mod:`state_helper.ProtegeHelper`
 		Class attribute to deal with `armor_py_api <https://github.com/EmaroLab/armor_py_api>`_
-	interface_helper: :mod:`state_helper.interface_helper`
+	interface_helper: :mod:`state_helper.InterfaceHelper`
 		Class attribute to deal with the interface logic
 	
 	Methods
@@ -277,7 +285,8 @@ class PlanToChargingStation(State):
 				# Acquire mutex to preserve synchronization
 				self._iHelper.mutex.acquire()
 				try:
-					if not self._iHelper.is_battery_low(): # If somehow the battery go recharged ( Not possible in the real life scenario, however, to make random sense work )
+					# If somehow the battery go recharged ( Not possible in the real life scenario, however, to make random sense work )
+					if not self._iHelper.is_battery_low(): 
 						rospy.loginfo(anm.tag_log("Miracle. Robot's battery got full...", LOG_TAG + " >>> " + STATE_PLAN_TO_CHARGING_LOCATION))
 						# Cancel current goal
 						self._iHelper.planner_client.cancel_goals()
@@ -296,13 +305,16 @@ class GoToChargingStation(State):
 	
 	'''
 	
-	This class represents the implementation of the STATE_GO_TO_CHARGING_STATION state.
+	This class represents the implementation of the **GO_TO_CHARGING_STATION** state. When the previous state **PLAN_TO_CHARGING_STATION** completes, it receives the desired trajectory
+	and calls :mod:`state_helper.InterfaceHelper.controller_client` to follow the via points. When the client finishes, it also calls :mod:`state_helper.ProtegeHelper.move_robot` to move the robot 
+	in the ontology. After that, it checks whether the new location of the robot is the same as the charging one. If yes, then transits to **RECHARGE**. And in other case, returns to 
+	the previous state **PLAN_TO_CHARGING_STATION**
 	
 	Attributes
 	----------
 	protege_helper: :mod:`state_helper.ProtegeHelper`
 		Class attribute to deal with `armor_py_api <https://github.com/EmaroLab/armor_py_api>`_
-	interface_helper: :mod:`state_helper.interface_helper`
+	interface_helper: :mod:`state_helper.InterfaceHelper`
 		Class attribute to deal with the interface logic
 	
 	Methods
@@ -396,13 +408,17 @@ class Recharge(State):
 	
 	'''
 	
-	This class represents the implementation of the STATE_RECHARGE state.
+	This class represents the implementation of the **RECHARGE** state. This is the main recharging state. This state executes the simulation of the process of recharging the battery.
+	There are two possible cases of the simulation. First, if the random sense is active, then this state just waits until the battery gets full again. Second, if the manual sense is active, then 
+	it simulates the charging, by waiting the specified amount of time. Also, in order to better visualize, it prints to the screen the current battery charge. It is calculated by 
+	calling :mod:`rospy.Time.now.to_sec` and subtracting *t0* (initial timestamp, when the battery got low, received as an input from whatever state that was active). Then, the obtained number is 
+	divided by total charging time and multiplied by 100. 
 	
 	Attributes
 	----------
 	protege_helper: :mod:`state_helper.ProtegeHelper`
 		Class attribute to deal with `armor_py_api <https://github.com/EmaroLab/armor_py_api>`_
-	interface_helper: :mod:`state_helper.interface_helper`
+	interface_helper: :mod:`state_helper.InterfaceHelper`
 		Class attribute to deal with the interface logic
 	
 	Methods
@@ -486,11 +502,13 @@ class PlanToLocation(State):
 	
 	'''
 	
-	This class represents the implementation of the STATE_PLAN_TO_LOCATION state.
+	This class represents the implementation of the **PLAN_TO_GIVEN_LOCATION** state. When the **START_BEHAVIOR** terminates, it gives the desired location to this state. 
+	It calls the Planner Action Server (:mod:`state_helper.InterfaceHelper.planner_client` to compute the planning trajectory to that location.  
+	It also checks every period specified by `LOOP_RATE_SLEEP` the current state of the battery, if it got low, it terminates and transits to **START_CHARGING_ROTUINE** state.
 	
 	Attributes
 	----------
-	interface_helper: :mod:`state_helper.interface_helper`
+	interface_helper: :mod:`state_helper.InterfaceHelper`
 		Class attribute to deal with the interface logic
 	
 	Methods
@@ -580,13 +598,15 @@ class GoToLocation(State):
 	
 	'''
 	
-	This class represents the implementation of the STATE_GO_TO_LOCATION state.
+	This class represents the implementation of the **GO_TO_GIVEN_LOCATION** state. When the previous state (**PLAN_TO_GIVEN_LOCATION**) terminates, it transfers the computed trajectory
+	to this state as an input key. Then, the state calls the Controller Action Server (:mod:`state_helper.InterfaceHelper.controller_client`) to follow the desired trajectory. 
+	It also checks every period specified by *LOOP_RATE_SLEEP* the current state of the battery, if it got low, it terminates and transits to **START_CHARGING_ROTUINE** state.
 	
 	Attributes
 	----------
 	protege_helper: :mod:`state_helper.ProtegeHelper`
 		Class attribute to deal with `armor_py_api <https://github.com/EmaroLab/armor_py_api>`_
-	interface_helper: :mod:`state_helper.interface_helper`
+	interface_helper: :mod:`state_helper.InterfaceHelper`
 		Class attribute to deal with the interface logic
 	
 	Methods
@@ -661,11 +681,12 @@ class WaitInLocation(State):
 	
 	'''
 	
-	This class represents the implementation of the STATE_WAIT_IN_LOCATION state.
+	This class represents the implementation of the **WAIT_IN_LOCATION** state. In this state, the algorithm just waits for the specified amount of time to simulate the inspection 
+	of the location, where the robot is located. Also, every *LOOP_SLEEP_TIME* checks the battery state to transit to **START_CHARGING_ROUTINE** state in case if it is low.
 	
 	Attributes
 	----------
-	interface_helper: :mod:`state_helper.interface_helper`
+	interface_helper: :mod:`state_helper.InterfaceHelper`
 		Class attribute to deal with the interface logic
 	
 	Methods
@@ -714,7 +735,7 @@ class WaitInLocation(State):
 		# Simulate non-blocking wait
 		i = 0
 		while i < self._iHelper.waiting_time: # Amount of time is specified as a parameter
-			rospy.sleep(0.05) # 20 Hz, fast enough to check the battery meanwhile
+			rospy.sleep(LOOP_SLEEP_TIME) # 10 Hz, fast enough to check the battery meanwhile
 			# Acquire the mutex to ensure data consistency
 			self._iHelper.mutex.acquire() 
 			try:
@@ -725,7 +746,7 @@ class WaitInLocation(State):
 			finally:
 				# Release the mutex
 				self._iHelper.mutex.release()
-			i = i + 0.05
+			i = i + LOOP_SLEEP_TIME
 		rospy.loginfo(anm.tag_log("Done waiting", LOG_TAG + " >>> " + STATE_WAIT_IN_LOCATION))
 		return TRANS_DONE_WAITING
 

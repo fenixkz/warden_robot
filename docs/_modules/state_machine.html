@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>state_machine &mdash; Warden_robot 1.0 documentation</title>
+  <title>state_machine &mdash; warden_robot 1.0 documentation</title>
       <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
@@ -27,7 +27,7 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="../index.html" class="icon icon-home"> Warden_robot
+            <a href="../index.html" class="icon icon-home"> warden_robot
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -45,7 +45,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../index.html">Warden_robot</a>
+          <a href="../index.html">warden_robot</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -74,7 +74,8 @@
 
 <span class="sd">This script is the main script that creates the state machine based on `SMACH &lt;http://wiki.ros.org/smach&gt;`_ ROS library.</span>
 <span class="sd">The necessary connections to ontology via `armor_py_api &lt;https://github.com/EmaroLab/armor_py_api&gt;`_ is done via the helper class :mod:`state_helper.ProtegeHelper`</span>
-<span class="sd">Interface helper (:mod:`state_helper.interface_helper`) is used to do the logic described by the surveillance policy</span>
+<span class="sd">Interface helper (:mod:`state_helper.InterfaceHelper`) is used to do the logic described by the surveillance policy</span>
+
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="c1"># Import of the necessary libraris</span>
@@ -127,7 +128,8 @@
 <div class="viewcode-block" id="BuildMap"><a class="viewcode-back" href="../index.html#state_machine.BuildMap">[docs]</a><span class="k">class</span> <span class="nc">BuildMap</span><span class="p">(</span><span class="n">State</span><span class="p">):</span>
 	<span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">	</span>
-<span class="sd">	This class represents the implementation of the STATE_BUILD_MAP state.</span>
+<span class="sd">	This class represents the implementation of the **BUILD_MAP** state. In this state, the robot calls :mod:`state_helper.ProtegeHelper.build_map` function to build the </span>
+<span class="sd">	topological map of the environment, and then calls :mod:`state_helper.ProtegeHelper.move_robot` to move the robot to the starting location &#39;E&#39;.</span>
 <span class="sd">	</span>
 <span class="sd">	Attributes</span>
 <span class="sd">	----------</span>
@@ -197,13 +199,15 @@
 
 	<span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">	</span>
-<span class="sd">	This class represents the implementation of the STATE_START_BEHAVIOR state.</span>
+<span class="sd">	This class represents the implementation of the **START_BEHAVIOR** state. This state is the initial state of **START_EXPLORING** super state. During the activation of </span>
+<span class="sd">	current state, the robot calls the method :mod:`state_helper.ProtegeHelper.canReach` to retrieve of all location that it can reach. If the :mod:`state_helper.ProtegeHelper` cannot</span>
+<span class="sd">	get the list of reachable location, raises an error. Else it calls :mod:`state_helper.ProtegeHelper.decide_next_location` to decide what should be the location that the robot should visit.</span>
 <span class="sd">	</span>
 <span class="sd">	Attributes</span>
 <span class="sd">	----------</span>
 <span class="sd">	protege_helper: :mod:`state_helper.ProtegeHelper`</span>
 <span class="sd">		Class attribute to deal with `armor_py_api &lt;https://github.com/EmaroLab/armor_py_api&gt;`_</span>
-<span class="sd">	interface_helper: :mod:`state_helper.interface_helper`</span>
+<span class="sd">	interface_helper: :mod:`state_helper.InterfaceHelper`</span>
 <span class="sd">		Class attribute to deal with the interface logic</span>
 <span class="sd">	</span>
 <span class="sd">	Methods</span>
@@ -263,13 +267,17 @@
 	
 	<span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">	</span>
-<span class="sd">	This class represents the implementation of the STATE_PLAN_TO_CHARGING_STATION state.</span>
+<span class="sd">	This class represents the implementation of the **PLAN_TO_CHARGING_STATION** state. This state becomes active, when the battery of the robot is low. </span>
+<span class="sd">	It calls :mod:`state_helper.InterfaceHelper.get_charging_location` to know where is the charging station is located. If it is the same location as the current location of the robot</span>
+<span class="sd">	Then, it terminates and transits to **RECHARGE**. If not, then via :mod:`state_helper.ProtegeHelper.plan_to_recharge_station` method finds the closest location that the robot</span>
+<span class="sd">	can reach and calls :mod:`state_helper.InterfaceHelper.planner_client` to compute the planning trajectory to that location. After the successfull completion of the action server </span>
+<span class="sd">	computation, terminates and transits to **GO_TO_CHARGING_STATION**.</span>
 <span class="sd">	</span>
 <span class="sd">	Attributes</span>
 <span class="sd">	----------</span>
 <span class="sd">	protege_helper: :mod:`state_helper.ProtegeHelper`</span>
 <span class="sd">		Class attribute to deal with `armor_py_api &lt;https://github.com/EmaroLab/armor_py_api&gt;`_</span>
-<span class="sd">	interface_helper: :mod:`state_helper.interface_helper`</span>
+<span class="sd">	interface_helper: :mod:`state_helper.InterfaceHelper`</span>
 <span class="sd">		Class attribute to deal with the interface logic</span>
 <span class="sd">	</span>
 <span class="sd">	Methods</span>
@@ -343,7 +351,8 @@
 				<span class="c1"># Acquire mutex to preserve synchronization</span>
 				<span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
 				<span class="k">try</span><span class="p">:</span>
-					<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">is_battery_low</span><span class="p">():</span> <span class="c1"># If somehow the battery go recharged ( Not possible in the real life scenario, however, to make random sense work )</span>
+					<span class="c1"># If somehow the battery go recharged ( Not possible in the real life scenario, however, to make random sense work )</span>
+					<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">is_battery_low</span><span class="p">():</span> 
 						<span class="n">rospy</span><span class="o">.</span><span class="n">loginfo</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">tag_log</span><span class="p">(</span><span class="s2">&quot;Miracle. Robot&#39;s battery got full...&quot;</span><span class="p">,</span> <span class="n">LOG_TAG</span> <span class="o">+</span> <span class="s2">&quot; &gt;&gt;&gt; &quot;</span> <span class="o">+</span> <span class="n">STATE_PLAN_TO_CHARGING_LOCATION</span><span class="p">))</span>
 						<span class="c1"># Cancel current goal</span>
 						<span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">planner_client</span><span class="o">.</span><span class="n">cancel_goals</span><span class="p">()</span>
@@ -362,13 +371,16 @@
 	
 	<span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">	</span>
-<span class="sd">	This class represents the implementation of the STATE_GO_TO_CHARGING_STATION state.</span>
+<span class="sd">	This class represents the implementation of the **GO_TO_CHARGING_STATION** state. When the previous state **PLAN_TO_CHARGING_STATION** completes, it receives the desired trajectory</span>
+<span class="sd">	and calls :mod:`state_helper.InterfaceHelper.controller_client` to follow the via points. When the client finishes, it also calls :mod:`state_helper.ProtegeHelper.move_robot` to move the robot </span>
+<span class="sd">	in the ontology. After that, it checks whether the new location of the robot is the same as the charging one. If yes, then transits to **RECHARGE**. And in other case, returns to </span>
+<span class="sd">	the previous state **PLAN_TO_CHARGING_STATION**</span>
 <span class="sd">	</span>
 <span class="sd">	Attributes</span>
 <span class="sd">	----------</span>
 <span class="sd">	protege_helper: :mod:`state_helper.ProtegeHelper`</span>
 <span class="sd">		Class attribute to deal with `armor_py_api &lt;https://github.com/EmaroLab/armor_py_api&gt;`_</span>
-<span class="sd">	interface_helper: :mod:`state_helper.interface_helper`</span>
+<span class="sd">	interface_helper: :mod:`state_helper.InterfaceHelper`</span>
 <span class="sd">		Class attribute to deal with the interface logic</span>
 <span class="sd">	</span>
 <span class="sd">	Methods</span>
@@ -462,13 +474,17 @@
 	
 	<span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">	</span>
-<span class="sd">	This class represents the implementation of the STATE_RECHARGE state.</span>
+<span class="sd">	This class represents the implementation of the **RECHARGE** state. This is the main recharging state. This state executes the simulation of the process of recharging the battery.</span>
+<span class="sd">	There are two possible cases of the simulation. First, if the random sense is active, then this state just waits until the battery gets full again. Second, if the manual sense is active, then </span>
+<span class="sd">	it simulates the charging, by waiting the specified amount of time. Also, in order to better visualize, it prints to the screen the current battery charge. It is calculated by </span>
+<span class="sd">	calling :mod:`rospy.Time.now.to_sec` and subtracting *t0* (initial timestamp, when the battery got low, received as an input from whatever state that was active). Then, the obtained number is </span>
+<span class="sd">	divided by total charging time and multiplied by 100. </span>
 <span class="sd">	</span>
 <span class="sd">	Attributes</span>
 <span class="sd">	----------</span>
 <span class="sd">	protege_helper: :mod:`state_helper.ProtegeHelper`</span>
 <span class="sd">		Class attribute to deal with `armor_py_api &lt;https://github.com/EmaroLab/armor_py_api&gt;`_</span>
-<span class="sd">	interface_helper: :mod:`state_helper.interface_helper`</span>
+<span class="sd">	interface_helper: :mod:`state_helper.InterfaceHelper`</span>
 <span class="sd">		Class attribute to deal with the interface logic</span>
 <span class="sd">	</span>
 <span class="sd">	Methods</span>
@@ -552,11 +568,13 @@
 	
 	<span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">	</span>
-<span class="sd">	This class represents the implementation of the STATE_PLAN_TO_LOCATION state.</span>
+<span class="sd">	This class represents the implementation of the **PLAN_TO_GIVEN_LOCATION** state. When the **START_BEHAVIOR** terminates, it gives the desired location to this state. </span>
+<span class="sd">	It calls the Planner Action Server (:mod:`state_helper.InterfaceHelper.planner_client` to compute the planning trajectory to that location.  </span>
+<span class="sd">	It also checks every period specified by `LOOP_RATE_SLEEP` the current state of the battery, if it got low, it terminates and transits to **START_CHARGING_ROTUINE** state.</span>
 <span class="sd">	</span>
 <span class="sd">	Attributes</span>
 <span class="sd">	----------</span>
-<span class="sd">	interface_helper: :mod:`state_helper.interface_helper`</span>
+<span class="sd">	interface_helper: :mod:`state_helper.InterfaceHelper`</span>
 <span class="sd">		Class attribute to deal with the interface logic</span>
 <span class="sd">	</span>
 <span class="sd">	Methods</span>
@@ -646,13 +664,15 @@
 	
 	<span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">	</span>
-<span class="sd">	This class represents the implementation of the STATE_GO_TO_LOCATION state.</span>
+<span class="sd">	This class represents the implementation of the **GO_TO_GIVEN_LOCATION** state. When the previous state (**PLAN_TO_GIVEN_LOCATION**) terminates, it transfers the computed trajectory</span>
+<span class="sd">	to this state as an input key. Then, the state calls the Controller Action Server (:mod:`state_helper.InterfaceHelper.controller_client`) to follow the desired trajectory. </span>
+<span class="sd">	It also checks every period specified by *LOOP_RATE_SLEEP* the current state of the battery, if it got low, it terminates and transits to **START_CHARGING_ROTUINE** state.</span>
 <span class="sd">	</span>
 <span class="sd">	Attributes</span>
 <span class="sd">	----------</span>
 <span class="sd">	protege_helper: :mod:`state_helper.ProtegeHelper`</span>
 <span class="sd">		Class attribute to deal with `armor_py_api &lt;https://github.com/EmaroLab/armor_py_api&gt;`_</span>
-<span class="sd">	interface_helper: :mod:`state_helper.interface_helper`</span>
+<span class="sd">	interface_helper: :mod:`state_helper.InterfaceHelper`</span>
 <span class="sd">		Class attribute to deal with the interface logic</span>
 <span class="sd">	</span>
 <span class="sd">	Methods</span>
@@ -727,11 +747,12 @@
 	
 	<span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">	</span>
-<span class="sd">	This class represents the implementation of the STATE_WAIT_IN_LOCATION state.</span>
+<span class="sd">	This class represents the implementation of the **WAIT_IN_LOCATION** state. In this state, the algorithm just waits for the specified amount of time to simulate the inspection </span>
+<span class="sd">	of the location, where the robot is located. Also, every *LOOP_SLEEP_TIME* checks the battery state to transit to **START_CHARGING_ROUTINE** state in case if it is low.</span>
 <span class="sd">	</span>
 <span class="sd">	Attributes</span>
 <span class="sd">	----------</span>
-<span class="sd">	interface_helper: :mod:`state_helper.interface_helper`</span>
+<span class="sd">	interface_helper: :mod:`state_helper.InterfaceHelper`</span>
 <span class="sd">		Class attribute to deal with the interface logic</span>
 <span class="sd">	</span>
 <span class="sd">	Methods</span>
@@ -780,7 +801,7 @@
 		<span class="c1"># Simulate non-blocking wait</span>
 		<span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
 		<span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">waiting_time</span><span class="p">:</span> <span class="c1"># Amount of time is specified as a parameter</span>
-			<span class="n">rospy</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.05</span><span class="p">)</span> <span class="c1"># 20 Hz, fast enough to check the battery meanwhile</span>
+			<span class="n">rospy</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">LOOP_SLEEP_TIME</span><span class="p">)</span> <span class="c1"># 10 Hz, fast enough to check the battery meanwhile</span>
 			<span class="c1"># Acquire the mutex to ensure data consistency</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span> 
 			<span class="k">try</span><span class="p">:</span>
@@ -791,7 +812,7 @@
 			<span class="k">finally</span><span class="p">:</span>
 				<span class="c1"># Release the mutex</span>
 				<span class="bp">self</span><span class="o">.</span><span class="n">_iHelper</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
-			<span class="n">i</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="mf">0.05</span>
+			<span class="n">i</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="n">LOOP_SLEEP_TIME</span>
 		<span class="n">rospy</span><span class="o">.</span><span class="n">loginfo</span><span class="p">(</span><span class="n">anm</span><span class="o">.</span><span class="n">tag_log</span><span class="p">(</span><span class="s2">&quot;Done waiting&quot;</span><span class="p">,</span> <span class="n">LOG_TAG</span> <span class="o">+</span> <span class="s2">&quot; &gt;&gt;&gt; &quot;</span> <span class="o">+</span> <span class="n">STATE_WAIT_IN_LOCATION</span><span class="p">))</span>
 		<span class="k">return</span> <span class="n">TRANS_DONE_WAITING</span></div></div>
 
