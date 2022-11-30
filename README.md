@@ -94,9 +94,12 @@ When the robot has successfully moved to a new location, the state machine goes 
 Every of that states has `RECHARGING_THE_BATTERY` transitions. That transitions is executed when the robot's battery got low while executing the state routine.
 
 #### Start Charging Routine State
-This high level state has three inner states and one possible output - `BATTERY_IS_FULL`, which tramsits the state machine to **`START_EXPLORING`** state.  
-The initial state is **`PLAN_TO_CHARGING_LOCATION`**, where the algorithm check whether the robot is in location containing the charging station. If yes, then it transits to **`RECHARGE`** state, where the algorithm simulates the recharging process of the battery. If no, then it finds the location closest to the charging station and computes plan to it. After that, it transits to **`GO_TO_CHARGING_LOCATION`** state, where the Controller Action server follows the computed plan and checks again whether the robot is within the charging location. If yes, then it transits to **`RECHARGE`** and if no, then the routine repeats.  
-Finally, **`RECHARGE`** state check if the battery got full. If the battery is full, then it transits to `BATTERY_FULL`, if not it transits to itself.
+This high level state has three inner states and one possible output - `BATTERY_IS_FULL`, which trasmits the state machine to **`START_EXPLORING`** state.  
+
+The initial state is **`PLAN_TO_CHARGING_LOCATION`**, where the algorithm checks whether the robot is in location containing the charging station. If yes, then it transits to **`RECHARGE`** state, where the algorithm simulates the recharging process of the battery. If no, then it finds the location closest to the charging station and computes a plan to it.  
+After that, it transits to **`GO_TO_CHARGING_LOCATION`** state, where the Controller Action server follows the computed plan and checks again whether the robot is within the charging location. If yes, then it transits to **`RECHARGE`** and if no, then the routine repeats.  
+
+Finally, **`RECHARGE`** state check if the battery got full. If the battery is full, then it transits to `BATTERY_FULL`, if not it transits to itself and does it until the battery gets full.
 
 ## Software architecture
 The _scripts/_ folder contains the information on each software component that was used to create this repository.  
