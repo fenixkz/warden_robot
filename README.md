@@ -40,13 +40,13 @@ Two arguments are given to the launch file.
 ### Parameters
 In the `main.launch` file you can find the parameters used for the state machine implementation:
  - `test/random_sense/active` takes the argument `random` and decides whether the state machine is going to use random or manual sense
- - `test/random_plan_points` is the list of two integer numbers representing the amount of via points given by the **Planner** action server
- - `test/random_plan_time` is the list of two float numbers representing a delay to simulate computation of via points
- - `test/random_motion_time` is the list of two float numbers representing a delay to simulate the time spent moving the robot to that location
- - `state/initial_pose` is the list of two float numbers representing the initial position of the robot in the environment
- - `config/waiting_time` is the float number representing the waiting time of the robot in a location for surveillance purposes
- - `config/charge_time` is the float number representing the waiting time to simulate a process of recharging the battery of the robot
- - `config/environment_size` is the list of two float numbers representing the size of the environment
+ - `test/random_plan_points` is a list of two integer numbers representing the amount of via points given by the **Planner** action server
+ - `test/random_plan_time` is a list of two float numbers representing a delay to simulate computation of via points
+ - `test/random_motion_time` is a list of two float numbers representing a delay to simulate the time spent moving the robot to that location
+ - `state/initial_pose` is a list of two float numbers representing the initial position of the robot in the environment
+ - `config/waiting_time` is a float number representing the waiting time of the robot in a location for surveillance purposes
+ - `config/charge_time` is a float number representing the waiting time to simulate a process of recharging the battery of the robot
+ - `config/environment_size` is a list of two float numbers representing the size of the environment
  - `config/charging_station` is a string representing the location where the charging station is located
  - `config/ontology_name` is a string representing the name of the ontology
  - `config/ontology_path` is a string representing the absolute path to the ontology file
@@ -99,5 +99,12 @@ Finally, **`RECHARGE`** state check if the battery got full. If the battery is f
 The _scripts/_ folder contains the information on each software component that was used to create this repository.  
 **Planner.py** and **Controller.py** were given to us and more in-depth explanation of these software can be found [here](https://github.com/buoncubi/arch_skeleton)
 ### State_helper
-**state_helper.py** implements helper classes to deal with `armor_py_api` and overall logic of the surveillance policy. It incorporates three classes: _ProtegeHelper()_, _ActionClientHelper()_, and _InterfaceHelper()_. The documentation provides explanation of their logic.
+**state_helper.py** implements helper classes to deal with `armor_py_api` and overall logic of the surveillance policy. It incorporates three classes: _ProtegeHelper()_, _ActionClientHelper()_, and _InterfaceHelper()_. The documentation provides the explanation of their logic.
 ### State_machine
+This is the main python module that creates the SMACH like State Machine and does the solution to the assignment. Again, please refer to the documentation for more detailed explanation.
+
+## Problems and further improvements
+The solution works very well for the provided as default parameters. However, some problems may occur when you change the location where the charging station is located. With this connection further improvements are:
+ - Improve the `state_helper.ProtegeHelper.plan_to_recharge_station` method to work for other charging locations
+ - Use the previously computed plans to move between the same locations insted of computing the new one for better performance
+ - Implement the possibility of adding and controlling more than one robot
