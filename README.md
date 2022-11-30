@@ -78,13 +78,16 @@ The diagram of the states is shown below. Each of the phase is indicated in the 
 
 ## States and transitions
 ### Phase 1
-The program starts with the Phase 1. This phase includes only one state: **`BUILD_MAP`** which has only two possible output: `MAP_HAS_BUILT` and `MAP_HAS_NOT_BUILT`. The latter output transits to itself, while the former one transits to the **`START_EXPLORING`** state.
+The program starts with the Phase 1. This phase includes only one state: **`BUILD_MAP`** which has only two possible output: `MAP_HAS_BUILT` and `MAP_HAS_NOT_BUILT`. The latter output transits to itself, while the former one transits to the **`START_EXPLORING`** state and starts the normal behavior of the robot.
 
 ### Phase 2
 Phase 2 has some hierarchical states. There are two higher level states: **`START_EXPLORING`** and **`START_CHARGING_ROUTINE`**. 
 
 #### Start Exploring State
-This high level state incorporates four lower-level states and has two outputs. The possible outputs are: `REPEAT` and `RECHARGING_THE_BATTERY`. The first one transits the state to itself to do the inspection in a infinite loop, and the second one refers to the transition when the battery got low and transits the state machine to **`START_CHARGING_ROUTINE`** state.  
+This high level state incorporates four lower-level states and has two outputs. It is used as the main state to do the normal surveillance of the robot. 
+
+The possible outputs are: `REPEAT` and `RECHARGING_THE_BATTERY`. The first one transits the state to itself to do the inspection in a infinite loop, and the second one refers to the transition when the battery got low and transits the state machine to **`START_CHARGING_ROUTINE`** state.  
+
 Four inner states are: **`START_BEHAVIOR`**, **`PLAN_TO_GIVEN_LOCATION`**, **`GO_TO_GIVEN_LOCATION`**, and **`WAIT_IN_LOCATION`**.   
 **`START_BEHAVIOR`** is the initial state of the outer state, in this state the program decides the next location, where the robot should go and transits to **`PLAN_TO_GIVEN_LOCATION`**. In that state, the algorithm calls the Planner Action server to compute the plan to the desired location. After the planner is done, it transits to **`GO_TO_GIVEN_LOCATION`**, where the algorithm calls the Controller Action server to follow the computed plan and moves the robot to the new location.  
 When the robot has successfully moved to a new location, the state machine goes to the final state **`WAIT_IN_LOCATION`**, where the robot waits for the specified amount of time.  
