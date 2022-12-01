@@ -109,7 +109,18 @@ Finally, **`RECHARGE`** state check if the battery got full. If the battery is f
 
 ## Software architecture
 The _scripts/_ folder contains the information on each software component that was used to create this repository.  
-**Planner.py** and **Controller.py** were given to us and more in-depth explanation of these software can be found [here](https://github.com/buoncubi/arch_skeleton)
+**Planner.py**, **robot_states.py** and **Controller.py** were given to us and more in-depth explanation of these software can be found [here](https://github.com/buoncubi/arch_skeleton). 
+
+A brief explanation:
+
+**Planner.py** simulates a process of finding the trajectory from the robot's position to the desired one. It computes an array of via points that are further needed for **Controller.py** script. It is publishes an Action Client ROS server `motion/planner`. The initial position for the trajectory is obtained via `state/get_pose` ROS service.
+
+**Controller.py** simulates a process of moving the robot along a desired trajectory. And then using service `state/set_pose` sets a new posiiton for the robot.
+
+**robot_state.py** is the robot itself. It publishes several ROS services that are needed for both **Planner** and **Controller**
+ - `state/set_pose` to set a new pose to the robot
+ - `state/get_pose` to get a current pose of the robot
+ - `state/battery_low` to get a current state of the battery
 ### State_helper
 **state_helper.py** implements helper classes to deal with `armor_py_api` and overall logic of the surveillance policy. It incorporates three classes: _ProtegeHelper()_, _ActionClientHelper()_, and _InterfaceHelper()_. The documentation provides the explanation of their logic.
 ### State_machine
