@@ -11,13 +11,13 @@ The repository was implemented on Docker container with Ubuntu 20.04 with ROS Ki
 Documentation for the project can be found [here](https://fenixkz.github.io/warden_robot/index.html)
 
 ## Scenario
-The robot is used to inspect different locations in the indoor environment. The robot’s objective is to visit different locations and stay there for some times.
+The robot is used to inspect different locations in the indoor environment (figure below). The robot’s objective is to visit different locations and stay there for some time. Specific monitoring policies determine which locations should be visited by the robot.
 
 The surveillance pollicy is as folows:
  - When the robot's battery is not low, it should move to different locations and stay there for amount of time specified beforehand
  - The robot should stay mainly in the corridors
  - If a reachable room has not been visited for some times it should visit it.
- - If the robot's battery got low, it should go to the location containing the charging station and recharge the battery.
+ - If the robot's battery got low, it should go to the location containing the charging station and recharge the battery. And after that continue doing the inspection of the environment. 
 ## Installation and launching
 ### Requirements
 The machine has to have ROS Noetic with python > 3.0. Also, the following libraries have to be installed beforehand
@@ -36,8 +36,11 @@ The machine has to have ROS Noetic with python > 3.0. Also, the following librar
 ### Launching
 Before launching the solution, please open the `warden_robot/launch/main.launch` file and change the path to the ontology file in `config/ontology_path` parameter.  
 To launch the solution, please source your workspace and run the following command:  
+
 `roslaunch warden_robot main.launch random:=false view_smach_gui:=false`  
+
 Two arguments are given to the launch file.  
+
 `random` refers to either random sense or manual sense of controlling the battery of the robot.  
 `view_smach_gui` arguments responsible for visualizing the state machine
 ### Parameters
