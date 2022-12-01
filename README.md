@@ -122,7 +122,14 @@ A brief explanation:
  - `state/get_pose` to get a current pose of the robot
  - `state/battery_low` to get a current state of the battery
 ### State_helper
-**state_helper.py** implements helper classes to deal with `armor_py_api` and overall logic of the surveillance policy. It incorporates three classes: _ProtegeHelper()_, _ActionClientHelper()_, and _InterfaceHelper()_. The documentation provides the explanation of their logic.
+**state_helper.py** implements helper classes to deal with `armor_py_api` and overall logic of the surveillance policy. It incorporates three classes: _ProtegeHelper()_, _ActionClientHelper()_, and _InterfaceHelper()_. The documentation provides the explanation of their logic. Briefly:
+
+**ProtegeHelper** has some methods to deal with queries and manipulations with the ontology, such as changing the 'isIn' property for the robot (to move the robot from one location to another)
+
+**ActionClientHelper** was given as an example to the similar problem. Implemented by the professor. It deals with actionlib to make it more convinient. 
+
+**InterfaceHelper** a helper class that loads all the necessarry parameters from ROS param server and gets the state of the battery from the corresponding service.
+
 ### State_machine
 This is the main python module that creates the SMACH like State Machine and does the solution to the assignment. Again, please refer to the documentation for more detailed explanation.
 
