@@ -118,9 +118,9 @@ A brief explanation:
 **Controller.py** simulates a process of moving the robot along a desired trajectory. And then using service `state/set_pose` sets a new posiiton for the robot.
 
 **robot_state.py** is the robot itself. It publishes several ROS services that are needed for both **Planner** and **Controller**
- - `state/set_pose` to set a new pose to the robot
- - `state/get_pose` to get a current pose of the robot
- - `state/battery_low` to get a current state of the battery
+ - `state/set_pose` to set a new pose to the robot, requries a message of type Point
+ - `state/get_pose` to get a current pose of the robot, returnes a message of type Point
+ - `state/battery_low` to get a current state of the battery, returns a boolean
 ### State_helper
 **state_helper.py** implements helper classes to deal with `armor_py_api` and overall logic of the surveillance policy. It incorporates three classes: _ProtegeHelper()_, _ActionClientHelper()_, and _InterfaceHelper()_. The documentation provides the explanation of their logic. Briefly:
 
