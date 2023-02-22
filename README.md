@@ -27,6 +27,7 @@ The machine has to have ROS Noetic with python > 3.0. Also, the following librar
  - [armor_py_api](https://github.com/EmaroLab/armor_py_api)
  - xterm `sudo apt install -y xterm`
  - [smach](http://wiki.ros.org/smach)
+ - [arch_skeleton](https://github.com/buoncubi/arch_skeleton
  
 ### Installation 
  - Clone the current repository to your ROS workspace 
